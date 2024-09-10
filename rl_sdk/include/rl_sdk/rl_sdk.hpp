@@ -130,7 +130,7 @@ public:
     // rl functions
     torch::Tensor Forward(std::shared_ptr<torch::Tensor> history_obs, std::shared_ptr<ObservationBuffer> history_obs_buf);
     torch::Tensor ComputeObservation();
-//    virtual void GetState(RobotState<double> *state) = 0;
+    void SetObservation();
 //    virtual void SetCommand(const RobotCommand<double> *command) = 0;
     void StateController(const RobotState<double> *state, RobotCommand<double> *command);
     torch::Tensor ComputeTorques(torch::Tensor actions);

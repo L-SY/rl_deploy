@@ -492,3 +492,12 @@ torch::Tensor rl_sdk::Forward(std::shared_ptr<torch::Tensor> history_obs, std::s
     return actions;
   }
 }
+
+void rl_sdk::SetObservation()
+{
+  obs.ang_vel = torch::tensor(robot_state.imu.gyroscope).unsqueeze(0);
+  obs.commands = torch::tensor({{control.x, control.y, control.yaw}});
+  obs.base_quat = torch::tensor(robot_state.imu.quaternion).unsqueeze(0);
+  obs.dof_pos = torch::tensor(robot_state.motor_state.q).narrow(0, 0, params.num_of_dofs).unsqueeze(0);
+  obs.dof_vel = torch::tensor(robot_state.motor_state.dq).narrow(0, 0, params.num_of_dofs).unsqueeze(0);
+}

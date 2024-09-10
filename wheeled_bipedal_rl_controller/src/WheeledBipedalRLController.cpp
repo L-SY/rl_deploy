@@ -81,13 +81,9 @@ void WheeledBipedalRLController::normal(const ros::Time& time, const ros::Durati
 
 void WheeledBipedalRLController::rl(const ros::Time& time, const ros::Duration& period)
 {
-//  There seems to be no need to add lin_vel
-//  rlActing_.obs.lin_vel = torch::tensor({{rlActing_.vel.linear.x, rlActing_.vel.linear.y, rlActing_.vel.linear.z}});
-  rlActing_.obs.ang_vel = torch::tensor(rlActing_.robot_state.imu.gyroscope).unsqueeze(0);
-  rlActing_.obs.commands = torch::tensor({{rlActing_.control.x, rlActing_.control.y, rlActing_.control.yaw}});
-  rlActing_.obs.base_quat = torch::tensor(rlActing_.robot_state.imu.quaternion).unsqueeze(0);
-  rlActing_.obs.dof_pos = torch::tensor(rlActing_.robot_state.motor_state.q).narrow(0, 0, rlActing_.params.num_of_dofs).unsqueeze(0);
-  rlActing_.obs.dof_vel = torch::tensor(rlActing_.robot_state.motor_state.dq).narrow(0, 0, rlActing_.params.num_of_dofs).unsqueeze(0);
+//TODO ：add set control.x, control.y, control.yaw.
+  setRLState();
+  rlActing_.SetObservation();
 
   torch::Tensor clamped_actions = rlActing_.Forward(history_obs_ptr_, history_obs_buf_ptr_);
 
@@ -99,6 +95,7 @@ void WheeledBipedalRLController::rl(const ros::Time& time, const ros::Duration& 
 
   rlActing_.output_torques = torch::clamp(origin_output_torques, -(rlActing_.params.torque_limits), rlActing_.params.torque_limits);
   rlActing_.output_dof_pos = rlActing_.ComputePosition(rlActing_.obs.actions);
+  setCommand();
 }
 
 void WheeledBipedalRLController::commandCB(const  geometry_msgs::Twist& msg)
