@@ -12,12 +12,22 @@
 #include <realtime_tools/realtime_publisher.h>
 #include <hardware_interface/imu_sensor_interface.h>
 
-//robot_common
+// robot_common
 #include "robot_common/interface/hardware_interface/robot_state_interface.h"
 #include "robot_common/utilities/ori_tool.h"
 #include "robot_common/utilities/tf_rt_broadcaster.h"
 
 #include "geometry_msgs/Twist.h"
+
+// Gazebo
+#include <gazebo_msgs/SetModelState.h>
+#include "std_srvs/Empty.h"
+
+// rl
+#include <torch/script.h>
+#include "rl_sdk/rl_sdk.hpp"
+#include "observation_buffer.hpp"
+
 namespace rl_controller
 {
 class WheeledBipedalRLController : public controller_interface::MultiInterfaceController<hardware_interface::EffortJointInterface,hardware_interface::ImuSensorInterface>
@@ -44,6 +54,20 @@ private:
   hardware_interface::RobotStateHandle robotStateHandle_;
   hardware_interface::ImuSensorHandle imuSensorHandle_;
   std::vector<hardware_interface::JointHandle> jointHandles_;
+
+  // RL
+  RL rlActing_;
+
+  // history buffer
+  ObservationBuffer history_obs_buf_;
+  torch::Tensor history_obs_;
+
+  //  Gazebo Service
+  std::string gazebo_model_name_;
+  ros::ServiceClient gazebo_set_model_state_client_;
+  ros::ServiceClient gazebo_pause_physics_client_;
+  ros::ServiceClient gazebo_unpause_physics_client_;
+
   realtime_tools::RealtimeBuffer<geometry_msgs::Twist> cmdRtBuffer_{};
 };
 

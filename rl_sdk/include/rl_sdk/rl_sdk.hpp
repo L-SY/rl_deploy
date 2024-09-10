@@ -127,10 +127,10 @@ public:
     void InitControl();
 
     // rl functions
-    virtual torch::Tensor Forward() = 0;
+//    virtual torch::Tensor Forward() = 0;
     torch::Tensor ComputeObservation();
-    virtual void GetState(RobotState<double> *state) = 0;
-    virtual void SetCommand(const RobotCommand<double> *command) = 0;
+//    virtual void GetState(RobotState<double> *state) = 0;
+//    virtual void SetCommand(const RobotCommand<double> *command) = 0;
     void StateController(const RobotState<double> *state, RobotCommand<double> *command);
     torch::Tensor ComputeTorques(torch::Tensor actions);
     torch::Tensor ComputePosition(torch::Tensor actions);
@@ -156,7 +156,7 @@ public:
     // protect func
     void TorqueProtect(torch::Tensor origin_output_torques);
 
-protected:
+//protected:
     // rl module
     torch::jit::script::Module model;
     // output buffer

@@ -4,6 +4,9 @@ project(wheeled_bipedal_rl_controller)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# Add DCMAKE_CURRENT_SOURCE_DIR
+add_definitions(-DCMAKE_CURRENT_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
+
 add_definitions(-Wall -Werror)
 
 set(CATKIN_PACKAGE_DEPENDENCIES
@@ -14,6 +17,8 @@ set(CATKIN_PACKAGE_DEPENDENCIES
         controller_interface
         realtime_tools
         robot_common
+        rl_sdk
+        gazebo_ros
 )
 
 ## Find catkin macros and libraries
@@ -21,6 +26,7 @@ find_package(catkin REQUIRED COMPONENTS
         ${CATKIN_PACKAGE_DEPENDENCIES}
 )
 
+find_package(Torch REQUIRED)
 find_package(Eigen3 REQUIRED)
 
 ###################################
@@ -41,6 +47,7 @@ include_directories(
         include
         ${catkin_INCLUDE_DIRS}
         ${EIGEN3_INCLUDE_DIR}
+        ${TORCH_INCLUDE_DIRS}
 
 )
 

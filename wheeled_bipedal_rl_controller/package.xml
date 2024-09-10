@@ -17,6 +17,8 @@
   <depend>pluginlib</depend>
   <depend>control_toolbox</depend>
   <depend>robot_common</depend>
+  <depend>rl_sdk</depend>
+  <depend>gazebo_ros</depend>
 
   <export>
     <controller_interface plugin="${prefix}/wheeled_bipedal_rl_controller_plugins.xml"/>
