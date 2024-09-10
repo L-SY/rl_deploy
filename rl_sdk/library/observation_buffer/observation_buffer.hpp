@@ -1,5 +1,4 @@
-#ifndef OBSERVATION_BUFFER_HPP
-#define OBSERVATION_BUFFER_HPP
+#pragma once
 
 #include <torch/torch.h>
 #include <vector>
@@ -20,5 +19,3 @@ private:
     int num_obs_total;
     torch::Tensor obs_buf;
 };
-
-#endif // OBSERVATION_BUFFER_HPP

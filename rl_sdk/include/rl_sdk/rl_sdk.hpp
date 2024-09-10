@@ -1,5 +1,4 @@
-#ifndef RL_SDK_HPP
-#define RL_SDK_HPP
+#pragma once
 
 #include <torch/script.h>
 #include <iostream>
@@ -164,5 +163,3 @@ protected:
     torch::Tensor output_torques;
     torch::Tensor output_dof_pos;
 };
-
-#endif
