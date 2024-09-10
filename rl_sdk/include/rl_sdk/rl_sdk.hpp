@@ -6,6 +6,7 @@
 #include <unistd.h>
 
 #include <yaml-cpp/yaml.h>
+#include "observation_buffer.hpp"
 
 namespace LOGGER {
     const char* const INFO    = "\033[0;37m[INFO]\033[0m ";
@@ -109,11 +110,11 @@ struct Observations
     torch::Tensor actions;
 };
 
-class RL
+class rl_sdk
 {
 public:
-    RL(){};
-    ~RL(){};
+    rl_sdk(){};
+    ~rl_sdk(){};
 
     ModelParams params;
     Observations obs;
@@ -127,7 +128,7 @@ public:
     void InitControl();
 
     // rl functions
-//    virtual torch::Tensor Forward() = 0;
+    torch::Tensor Forward(std::shared_ptr<torch::Tensor> history_obs, std::shared_ptr<ObservationBuffer> history_obs_buf);
     torch::Tensor ComputeObservation();
 //    virtual void GetState(RobotState<double> *state) = 0;
 //    virtual void SetCommand(const RobotCommand<double> *command) = 0;

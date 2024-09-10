@@ -18,9 +18,10 @@ bool WheeledBipedalRLController::init(hardware_interface::RobotHW* robot_hw, ros
   rlActing_.ReadYaml(rlActing_.robot_name);
 
   // history
+  history_obs_ptr_ = std::make_shared<torch::Tensor>(torch::zeros({rlActing_.params.num_observations}));
   if(rlActing_.params.use_history)
   {
-    history_obs_buf_ = ObservationBuffer(1, rlActing_.params.num_observations, 6);
+    history_obs_buf_ptr_ = std::make_shared<ObservationBuffer>(1, rlActing_.params.num_observations, 6);
   }
 
   // init
@@ -78,11 +79,64 @@ void WheeledBipedalRLController::normal(const ros::Time& time, const ros::Durati
   ROS_INFO_STREAM("normal Mode");
 }
 
+void WheeledBipedalRLController::rl(const ros::Time& time, const ros::Duration& period)
+{
+//  There seems to be no need to add lin_vel
+//  rlActing_.obs.lin_vel = torch::tensor({{rlActing_.vel.linear.x, rlActing_.vel.linear.y, rlActing_.vel.linear.z}});
+  rlActing_.obs.ang_vel = torch::tensor(rlActing_.robot_state.imu.gyroscope).unsqueeze(0);
+  rlActing_.obs.commands = torch::tensor({{rlActing_.control.x, rlActing_.control.y, rlActing_.control.yaw}});
+  rlActing_.obs.base_quat = torch::tensor(rlActing_.robot_state.imu.quaternion).unsqueeze(0);
+  rlActing_.obs.dof_pos = torch::tensor(rlActing_.robot_state.motor_state.q).narrow(0, 0, rlActing_.params.num_of_dofs).unsqueeze(0);
+  rlActing_.obs.dof_vel = torch::tensor(rlActing_.robot_state.motor_state.dq).narrow(0, 0, rlActing_.params.num_of_dofs).unsqueeze(0);
+
+  torch::Tensor clamped_actions = rlActing_.Forward(history_obs_ptr_, history_obs_buf_ptr_);
+
+  rlActing_.obs.actions = clamped_actions;
+
+  torch::Tensor origin_output_torques = rlActing_.ComputeTorques(rlActing_.obs.actions);
+
+  // rlActing_.TorqueProtect(origin_output_torques);
+
+  rlActing_.output_torques = torch::clamp(origin_output_torques, -(rlActing_.params.torque_limits), rlActing_.params.torque_limits);
+  rlActing_.output_dof_pos = rlActing_.ComputePosition(rlActing_.obs.actions);
+}
+
 void WheeledBipedalRLController::commandCB(const  geometry_msgs::Twist& msg)
 {
   cmdRtBuffer_.writeFromNonRT(msg);
 }
 
-}  // namespace rl_controller
+void WheeledBipedalRLController::setRLState()
+{
+  auto quaternion = imuSensorHandle_.getOrientation();
+  auto gyroscope = imuSensorHandle_.getAngularVelocity();
+  if(rlActing_.params.framework == "isaacgym")
+  {
+    rlActing_.robot_state.imu.quaternion[3] = quaternion[3];
+    rlActing_.robot_state.imu.quaternion[0] = quaternion[0];
+    rlActing_.robot_state.imu.quaternion[1] = quaternion[1];
+    rlActing_.robot_state.imu.quaternion[2] = quaternion[2];
+  }
+  else if(rlActing_.params.framework == "isaacsim")
+  {
+    rlActing_.robot_state.imu.quaternion[0] = quaternion[3];
+    rlActing_.robot_state.imu.quaternion[1] = quaternion[0];
+    rlActing_.robot_state.imu.quaternion[2] = quaternion[1];
+    rlActing_.robot_state.imu.quaternion[3] = quaternion[2];
+  }
 
+  rlActing_.robot_state.imu.gyroscope[0] = gyroscope[0];
+  rlActing_.robot_state.imu.gyroscope[1] = gyroscope[1];
+  rlActing_.robot_state.imu.gyroscope[2] = gyroscope[2];
+
+  // The order is determined by the Hardware interface in init.
+  for(int i = 0; i < rlActing_.params.num_of_dofs; ++i)
+  {
+    rlActing_.robot_state.motor_state.q[i] = jointHandles_[i].getPosition();
+    rlActing_.robot_state.motor_state.dq[i] = jointHandles_[i].getVelocity();
+    rlActing_.robot_state.motor_state.tauEst[i] = jointHandles_[i].getEffort();
+  }
+}
+
+}  // namespace rl_controller
 PLUGINLIB_EXPORT_CLASS(rl_controller::WheeledBipedalRLController, controller_interface::ControllerBase)

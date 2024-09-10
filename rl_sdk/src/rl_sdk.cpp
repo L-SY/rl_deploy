@@ -1,16 +1,18 @@
 #include "rl_sdk/rl_sdk.hpp"
+#include "observation_buffer.hpp"
 /* You may need to override this Forward() function
 torch::Tensor RL_XXX::Forward()
 {
     torch::autograd::GradMode::set_enabled(false);
     torch::Tensor clamped_obs = this->ComputeObservation();
     torch::Tensor actions = this->model.forward({clamped_obs}).toTensor();
-    torch::Tensor clamped_actions = torch::clamp(actions, this->params.clip_actions_lower, this->params.clip_actions_upper);
-    return clamped_actions;
+    torch::Tensor clamped_actions = torch::clamp(actions,
+this->params.clip_actions_lower, this->params.clip_actions_upper); return
+clamped_actions;
 }
 */
 
-torch::Tensor RL::ComputeObservation()
+torch::Tensor rl_sdk::ComputeObservation()
 {
     std::vector<torch::Tensor> obs_list;
 
@@ -52,7 +54,7 @@ torch::Tensor RL::ComputeObservation()
     return clamped_obs;
 }
 
-void RL::InitObservations()
+void rl_sdk::InitObservations()
 {
     this->obs.lin_vel = torch::tensor({{0.0, 0.0, 0.0}});
     this->obs.ang_vel = torch::tensor({{0.0, 0.0, 0.0}});
@@ -64,13 +66,13 @@ void RL::InitObservations()
     this->obs.actions = torch::zeros({1, this->params.num_of_dofs});
 }
 
-void RL::InitOutputs()
+void rl_sdk::InitOutputs()
 {
     this->output_torques = torch::zeros({1, this->params.num_of_dofs});
     this->output_dof_pos = this->params.default_dof_pos;
 }
 
-void RL::InitControl()
+void rl_sdk::InitControl()
 {
     this->control.control_state = STATE_WAITING;
     this->control.x = 0.0;
@@ -78,20 +80,20 @@ void RL::InitControl()
     this->control.yaw = 0.0;
 }
 
-torch::Tensor RL::ComputeTorques(torch::Tensor actions)
+torch::Tensor rl_sdk::ComputeTorques(torch::Tensor actions)
 {
     torch::Tensor actions_scaled = actions * this->params.action_scale;
     torch::Tensor output_torques = this->params.rl_kp * (actions_scaled + this->params.default_dof_pos - this->obs.dof_pos) - this->params.rl_kd * this->obs.dof_vel;
     return output_torques;
 }
 
-torch::Tensor RL::ComputePosition(torch::Tensor actions)
+torch::Tensor rl_sdk::ComputePosition(torch::Tensor actions)
 {
     torch::Tensor actions_scaled = actions * this->params.action_scale;
     return actions_scaled + this->params.default_dof_pos;
 }
 
-torch::Tensor RL::QuatRotateInverse(torch::Tensor q, torch::Tensor v, const std::string& framework)
+torch::Tensor rl_sdk::QuatRotateInverse(torch::Tensor q, torch::Tensor v, const std::string& framework)
 {
     torch::Tensor q_w;
     torch::Tensor q_vec;
@@ -113,7 +115,7 @@ torch::Tensor RL::QuatRotateInverse(torch::Tensor q, torch::Tensor v, const std:
     return a - b + c;
 }
 
-void RL::StateController(const RobotState<double> *state, RobotCommand<double> *command)
+void rl_sdk::StateController(const RobotState<double> *state, RobotCommand<double> *command)
 {
     static RobotState<double> start_state;
     static RobotState<double> now_state;
@@ -190,7 +192,7 @@ void RL::StateController(const RobotState<double> *state, RobotCommand<double> *
     // rl loop
     else if(this->running_state == STATE_RL_RUNNING)
     {
-        std::cout << "\r" << std::flush << LOGGER::INFO << "RL Controller x:" << this->control.x << " y:" << this->control.y << " yaw:" << this->control.yaw << std::flush;
+        std::cout << "\r" << std::flush << LOGGER::INFO << "rl_sdk Controller x:" << this->control.x << " y:" << this->control.y << " yaw:" << this->control.yaw << std::flush;
         for(int i = 0; i < this->params.num_of_dofs; ++i)
         {
             command->motor_command.q[i] = this->output_dof_pos[0][i].item<double>();
@@ -250,7 +252,7 @@ void RL::StateController(const RobotState<double> *state, RobotCommand<double> *
     }
 }
 
-void RL::TorqueProtect(torch::Tensor origin_output_torques)
+void rl_sdk::TorqueProtect(torch::Tensor origin_output_torques)
 {
     std::vector<int> out_of_range_indices;
     std::vector<double> out_of_range_values;
@@ -302,7 +304,7 @@ static bool kbhit()
     return byteswaiting > 0;
 }
 
-void RL::KeyboardInterface()
+void rl_sdk::KeyboardInterface()
 {
     if(kbhit())
     {
@@ -371,7 +373,7 @@ std::vector<T> ReadVectorFromYaml(const YAML::Node& node, const std::string& fra
     }
 }
 
-void RL::ReadYaml(std::string robot_name)
+void rl_sdk::ReadYaml(std::string robot_name)
 {
     // The config file is located at "rl_sar/src/rl_sar/models/<robot_name>/config.yaml"
     std::string config_path = std::string(CMAKE_CURRENT_SOURCE_DIR) + "/models/" + robot_name + "/config.yaml";
@@ -421,10 +423,10 @@ void RL::ReadYaml(std::string robot_name)
     this->params.fixed_kd = torch::tensor(ReadVectorFromYaml<double>(config["fixed_kd"], this->params.framework, rows, cols)).view({1, -1});
     this->params.torque_limits = torch::tensor(ReadVectorFromYaml<double>(config["torque_limits"], this->params.framework, rows, cols)).view({1, -1});
     this->params.default_dof_pos = torch::tensor(ReadVectorFromYaml<double>(config["default_dof_pos"], this->params.framework, rows, cols)).view({1, -1});
-    this->params.joint_controller_names = ReadVectorFromYaml<std::string>(config["joint_controller_names"], this->params.framework, rows, cols);
+//    this->params.joint_controller_names = ReadVectorFromYaml<std::string>(config["joint_controller_names"], this->params.framework, rows, cols);
 }
 
-void RL::CSVInit(std::string robot_name)
+void rl_sdk::CSVInit(std::string robot_name)
 {
     csv_filename = std::string(CMAKE_CURRENT_SOURCE_DIR) + "/models/" + robot_name + "/motor";
 
@@ -450,7 +452,7 @@ void RL::CSVInit(std::string robot_name)
     file.close();
 }
 
-void RL::CSVLogger(torch::Tensor torque, torch::Tensor tau_est, torch::Tensor joint_pos, torch::Tensor joint_pos_target, torch::Tensor joint_vel)
+void rl_sdk::CSVLogger(torch::Tensor torque, torch::Tensor tau_est, torch::Tensor joint_pos, torch::Tensor joint_pos_target, torch::Tensor joint_vel)
 {
     std::ofstream file(csv_filename.c_str(), std::ios_base::app);
 
@@ -463,4 +465,30 @@ void RL::CSVLogger(torch::Tensor torque, torch::Tensor tau_est, torch::Tensor jo
     file << std::endl;
 
     file.close();
+}
+
+torch::Tensor rl_sdk::Forward(std::shared_ptr<torch::Tensor> history_obs, std::shared_ptr<ObservationBuffer> history_obs_buf)
+{
+  torch::autograd::GradMode::set_enabled(false);
+  torch::Tensor clamped_obs = this->ComputeObservation();
+  torch::Tensor actions;
+  if(this->params.use_history)
+  {
+    history_obs_buf->insert(clamped_obs);
+    *history_obs = history_obs_buf->get_obs_vec({0, 1, 2, 3, 4, 5});
+    actions = this->model.forward({*history_obs}).toTensor();
+  }
+  else
+  {
+    actions = this->model.forward({clamped_obs}).toTensor();
+  }
+
+  if(this->params.clip_actions_upper.numel() != 0 && this->params.clip_actions_lower.numel() != 0)
+  {
+    return torch::clamp(actions, this->params.clip_actions_lower, this->params.clip_actions_upper);
+  }
+  else
+  {
+    return actions;
+  }
 }

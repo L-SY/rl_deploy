@@ -33,16 +33,20 @@ namespace rl_controller
 class WheeledBipedalRLController : public controller_interface::MultiInterfaceController<hardware_interface::EffortJointInterface,hardware_interface::ImuSensorInterface>
 {
   enum ControllerState {
-    NORMAL
+    NORMAL,
+    RL
   };
 public:
   WheeledBipedalRLController() = default;
   bool init(hardware_interface::RobotHW* robot_hw, ros::NodeHandle& root_nh, ros::NodeHandle& controller_nh) override;
   void starting(const ros::Time& time) override;
   void update(const ros::Time& time, const ros::Duration& period) override;
+  void setCommand();
+  void setRLState();
 
 private:
   void normal(const ros::Time& time, const ros::Duration& period);
+  void rl(const ros::Time& time, const ros::Duration& period);
   void commandCB(const geometry_msgs::Twist& msg);
 
   int controllerState_ = NORMAL;
@@ -56,11 +60,11 @@ private:
   std::vector<hardware_interface::JointHandle> jointHandles_;
 
   // RL
-  RL rlActing_;
+  rl_sdk rlActing_;
 
   // history buffer
-  ObservationBuffer history_obs_buf_;
-  torch::Tensor history_obs_;
+  std::shared_ptr<torch::Tensor> history_obs_ptr_;
+  std::shared_ptr<ObservationBuffer> history_obs_buf_ptr_;
 
   //  Gazebo Service
   std::string gazebo_model_name_;
