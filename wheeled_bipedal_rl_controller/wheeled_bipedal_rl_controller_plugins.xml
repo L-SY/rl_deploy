@@ -1,0 +1,10 @@
+<library path="lib/librl_controller">
+    <!-- controller_interface types -->
+    <class name="rl_controller/WheeledBipedalRLController"
+           type="rl_controller::WheeledBipedalRLController"
+           base_class_type="controller_interface::ControllerBase">
+        <description>
+            This WheeledBipedalRLController to control robot.
+        </description>
+    </class>
+</library>
