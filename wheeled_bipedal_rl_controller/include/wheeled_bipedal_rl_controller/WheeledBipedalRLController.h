@@ -30,12 +30,17 @@
 
 namespace rl_controller
 {
-class WheeledBipedalRLController : public controller_interface::MultiInterfaceController<hardware_interface::EffortJointInterface,hardware_interface::ImuSensorInterface>
+class WheeledBipedalRLController
+  : public controller_interface::MultiInterfaceController<hardware_interface::RobotStateInterface,
+                                                          hardware_interface::EffortJointInterface,
+                                                          hardware_interface::ImuSensorInterface>
 {
-  enum ControllerState {
+  enum ControllerState
+  {
     NORMAL,
     RL
   };
+
 public:
   WheeledBipedalRLController() = default;
   bool init(hardware_interface::RobotHW* robot_hw, ros::NodeHandle& root_nh, ros::NodeHandle& controller_nh) override;
@@ -73,6 +78,9 @@ private:
   ros::ServiceClient gazebo_unpause_physics_client_;
 
   realtime_tools::RealtimeBuffer<geometry_msgs::Twist> cmdRtBuffer_{};
+
+  // Low level controller
+  std::vector<control_toolbox::Pid> Pids_;
 };
 
 }  // namespace rl_controller

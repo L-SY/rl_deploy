@@ -1,4 +1,4 @@
-<library path="lib/librl_controller">
+<library path="lib/libwheeled_bipedal_rl_controller">
     <!-- controller_interface types -->
     <class name="rl_controller/WheeledBipedalRLController"
            type="rl_controller::WheeledBipedalRLController"
