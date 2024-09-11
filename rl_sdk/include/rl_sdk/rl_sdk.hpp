@@ -61,9 +61,9 @@ enum STATE {
 struct Control
 {
     STATE control_state;
-    double x = 0.0;
-    double y = 0.0;
-    double yaw = 0.0;
+    double vel_x = 0.0;
+    double vel_yaw = 0.0;
+    double pos_z = 0.0;
 };
 
 struct ModelParams
@@ -135,10 +135,11 @@ public:
     void StateController(const RobotState<double> *state, RobotCommand<double> *command);
     torch::Tensor ComputeTorques(torch::Tensor actions);
     torch::Tensor ComputePosition(torch::Tensor actions);
+    torch::Tensor ComputeVelocity(torch::Tensor actions);
     torch::Tensor QuatRotateInverse(torch::Tensor q, torch::Tensor v, const std::string& framework);
 
     // yaml params
-    void ReadYaml(std::string robot_name);
+    void ReadYaml(const std::string config_path);
 
     // csv logger
     std::string csv_filename;
@@ -163,4 +164,5 @@ public:
     // output buffer
     torch::Tensor output_torques;
     torch::Tensor output_dof_pos;
+    torch::Tensor output_dof_vel;
 };
