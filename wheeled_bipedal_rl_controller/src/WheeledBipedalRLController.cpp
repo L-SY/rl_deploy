@@ -12,11 +12,6 @@ namespace rl_controller
 bool WheeledBipedalRLController::init(hardware_interface::RobotHW* robot_hw, ros::NodeHandle& root_nh,
                                               ros::NodeHandle& controller_nh)
 {
-  //  for (size_t i = 0; i < jointHandles_.size(); ++i) {
-  //    auto pid =
-  //    Pids_.push_back()
-  //  }
-
   // Hardware interface
   auto* effortJointInterface = robot_hw->get<hardware_interface::EffortJointInterface>();
   jointHandles_.push_back(effortJointInterface->getHandle("left_hip_joint"));
@@ -38,20 +33,34 @@ bool WheeledBipedalRLController::init(hardware_interface::RobotHW* robot_hw, ros
   // init
   initStateMsg();
 
+  // Low-level-controller
+  Pids_.resize(jointHandles_.size());
+  for (size_t i = 0; i < jointHandles_.size(); ++i)
+  {
+    ros::NodeHandle joint_nh(controller_nh, std::string("gains/") + jointHandles_[i].getName());
+    Pids_[i].reset();
+    if (!Pids_[i].init(joint_nh))
+    {
+      ROS_WARN_STREAM("Failed to initialize PID gains from ROS parameter server.");
+      return false;
+    }
+  }
+
   // rl_interface
   robotStatePub_ = controller_nh.advertise<rl_msgs::RobotState>("/rl/robot_state", 10);
   rlCommandSub_ = controller_nh.subscribe("/rl/command", 1, &WheeledBipedalRLController::rlCommandCB, this);
+
   return true;
 }
 
 void WheeledBipedalRLController::starting(const ros::Time& /*unused*/)
 {
+  ROS_INFO_STREAM("WheeledBipedalRLController Starting!");
   controllerState_ = NORMAL;
 }
 
 void WheeledBipedalRLController::update(const ros::Time& time, const ros::Duration& period)
 {
-
   rl(time,period);
   pubRLState();
 }
@@ -106,8 +115,21 @@ void WheeledBipedalRLController::pubRLState()
 
 void WheeledBipedalRLController::setCommand()
 {
-  for (size_t i = 0; i < jointHandles_.size(); ++i) {
-    jointHandles_[i].setCommand(rlCmdRtBuffer_.readFromRT()->data[i]);
+  auto rt_buffer = rlCmdRtBuffer_.readFromRT();
+  const auto& data = rt_buffer->data;  // 提前缓存数据指针，减少重复函数调用
+
+  if (data.empty())
+  {
+    for (auto& jointHandle : jointHandles_) {
+      jointHandle.setCommand(0.0);
+    }
+  }
+  else
+  {
+    for (size_t i = 0; i < jointHandles_.size(); ++i) {
+//      double commanded_effort = Pids_[i].computeCommand(desJointStates.position - effortJointHandles_[i].getPosition(), period);
+      jointHandles_[i].setCommand(data[i]);
+    }
   }
 }
 
