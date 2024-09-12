@@ -50,16 +50,14 @@ public:
   {
       torch::Tensor clamped_actions = Forward();
       obs.actions = clamped_actions;
-      torch::Tensor origin_output_torques = ComputeTorques(obs.actions);
+      torch::Tensor origin_output_command = ComputeCommand(obs.actions);
 
-      output_torques = torch::clamp(origin_output_torques, -(params.torque_limits), params.torque_limits);
-      output_dof_pos = ComputePosition(obs.actions);
-      output_dof_vel = ComputeVelocity(obs.actions);
-      ROS_INFO_STREAM(output_torques[0]);
+      output_command = torch::clamp(origin_output_command, -(params.torque_limits), params.torque_limits);
+      ROS_INFO_STREAM(output_command[0]);
 
       std_msgs::Float64MultiArray commandMsg;
       for (int i = 0; i < params.num_of_dofs; ++i) {
-        commandMsg.data.push_back(output_torques[0][i].item<double>());
+        commandMsg.data.push_back(output_command[0][i].item<double>());
       }
       rlCommandPub_.publish(commandMsg);
 
@@ -115,7 +113,8 @@ int main(int argc, char **argv)
   ros::NodeHandle nh("~");
 
   RLInterface rl_interface(nh);
-  ros::Rate loop_rate(10);
+  // the frequence should be gym 1/(dt*decimation)
+  ros::Rate loop_rate(100);
   while (ros::ok())
   {
     ros::spinOnce();

@@ -15,18 +15,6 @@ namespace LOGGER {
     const char* const DEBUG   = "\033[0;32m[DEBUG]\033[0m ";
 }
 
-template<typename T>
-struct RobotCommand
-{
-    struct MotorCommand
-    {
-        std::vector<T> q = std::vector<T>(32, 0.0);
-        std::vector<T> dq = std::vector<T>(32, 0.0);
-        std::vector<T> tau = std::vector<T>(32, 0.0);
-        std::vector<T> kp = std::vector<T>(32, 0.0);
-        std::vector<T> kd = std::vector<T>(32, 0.0);
-    } motor_command;
-};
 
 template<typename T>
 struct RobotState
@@ -77,10 +65,6 @@ struct ModelParams
     torch::Tensor clip_actions_upper;
     torch::Tensor clip_actions_lower;
     torch::Tensor torque_limits;
-    torch::Tensor rl_kd;
-    torch::Tensor rl_kp;
-    torch::Tensor fixed_kp;
-    torch::Tensor fixed_kd;
     torch::Tensor commands_scale;
     torch::Tensor default_dof_pos;
     std::vector<std::string> joint_controller_names;
@@ -108,7 +92,6 @@ public:
     Observations obs;
 
     RobotState<double> robot_state;
-    RobotCommand<double> robot_command;
 
     // init
     void InitObservations();
@@ -119,25 +102,17 @@ public:
     torch::Tensor Forward();
     torch::Tensor ComputeObservation();
     void SetObservation();
-    torch::Tensor ComputeTorques(torch::Tensor actions);
-    torch::Tensor ComputePosition(torch::Tensor actions);
-    torch::Tensor ComputeVelocity(torch::Tensor actions);
+    torch::Tensor ComputeCommand(torch::Tensor actions);
     torch::Tensor QuatRotateInverse(torch::Tensor q, torch::Tensor v, const std::string& framework);
-
-    // yaml params
-    void ReadYaml(const std::string config_path);
-
-    // csv logger
-    std::string csv_filename;
-    void CSVInit(std::string robot_name);
-    void CSVLogger(torch::Tensor torque, torch::Tensor tau_est, torch::Tensor joint_pos, torch::Tensor joint_pos_target, torch::Tensor joint_vel);
 
     // control
     Control control;
 
+    // yaml params
+    void ReadYaml(const std::string config_path);
+
     // others
     std::string robot_name;
-    bool simulation_running = false;
 
     // protect func
     void TorqueProtect(torch::Tensor origin_output_torques);
@@ -146,7 +121,6 @@ public:
     // rl module
     torch::jit::script::Module model;
     // output buffer
-    torch::Tensor output_torques;
+    torch::Tensor output_command;
     torch::Tensor output_dof_pos;
-    torch::Tensor output_dof_vel;
 };

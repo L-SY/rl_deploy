@@ -25,8 +25,8 @@ torch::Tensor rl_sdk::ComputeObservation()
         }
         else if(observation == "ang_vel")
         {
-            // obs_list.push_back(obs.ang_vel * params.ang_vel_scale); // TODO is QuatRotateInverse necessery?
-            obs_list.push_back(QuatRotateInverse(obs.base_quat, obs.ang_vel, params.framework) * params.ang_vel_scale);
+             obs_list.push_back(obs.ang_vel * params.ang_vel_scale); // TODO is QuatRotateInverse necessery?
+//            obs_list.push_back(QuatRotateInverse(obs.base_quat, obs.ang_vel, params.framework) * params.ang_vel_scale);
         }
         else if(observation == "gravity_vec")
         {
@@ -59,6 +59,7 @@ void rl_sdk::InitObservations()
 {
     obs.lin_vel = torch::tensor({{0.0, 0.0, 0.0}});
     obs.ang_vel = torch::tensor({{0.0, 0.0, 0.0}});
+    // No need change to -9.81
     obs.gravity_vec = torch::tensor({{0.0, 0.0, -1.0}});
     obs.commands = torch::tensor({{0.0, 0.0, 0.18}});
     obs.base_quat = torch::tensor({{0.0, 0.0, 0.0, 1.0}});
@@ -69,7 +70,7 @@ void rl_sdk::InitObservations()
 
 void rl_sdk::InitOutputs()
 {
-    output_torques = torch::zeros({1, params.num_of_dofs});
+    output_command = torch::zeros({1, params.num_of_dofs});
     output_dof_pos = params.default_dof_pos;
 }
 
@@ -80,25 +81,12 @@ void rl_sdk::InitControl()
     control.pos_z = 0.0;
 }
 
-torch::Tensor rl_sdk::ComputeTorques(torch::Tensor actions)
+torch::Tensor rl_sdk::ComputeCommand(torch::Tensor actions)
 {
     torch::Tensor actions_scaled = actions * params.action_scale;
     torch::Tensor pos_torques = actions_scaled + params.default_dof_pos ;
-    output_torques = pos_torques;
-    return output_torques;
-}
-
-torch::Tensor rl_sdk::ComputePosition(torch::Tensor actions)
-{
-    torch::Tensor actions_scaled = actions * params.action_scale;
-    return actions_scaled + params.default_dof_pos;
-}
-
-torch::Tensor rl_sdk::ComputeVelocity(torch::Tensor actions)
-{
-//  TODO: is right?
-  torch::Tensor actions_scaled = actions * params.action_scale;
-  return actions_scaled * params.dof_vel_scale;
+    output_command = pos_torques;
+    return output_command;
 }
 
 torch::Tensor rl_sdk::QuatRotateInverse(torch::Tensor q, torch::Tensor v, const std::string& framework)
@@ -260,46 +248,11 @@ void rl_sdk::ReadYaml(const std::string config_path)
 //    params.commands_scale = torch::tensor(ReadVectorFromYaml<double>(config["commands_scale"])).view({1, -1});
 //    params.commands_scale = torch::tensor({params.lin_vel_scale, params.lin_vel_scale, params.ang_vel_scale});
     params.commands_scale = torch::tensor({params.lin_vel_scale, params.ang_vel_scale, 5.0});
-    params.rl_kp = torch::tensor(ReadVectorFromYaml<double>(config["rl_kp"], params.framework, rows, cols)).view({1, -1});
-    params.rl_kd = torch::tensor(ReadVectorFromYaml<double>(config["rl_kd"], params.framework, rows, cols)).view({1, -1});
 //    params.fixed_kp = torch::tensor(ReadVectorFromYaml<double>(config["fixed_kp"], params.framework, rows, cols)).view({1, -1});
 //    params.fixed_kd = torch::tensor(ReadVectorFromYaml<double>(config["fixed_kd"], params.framework, rows, cols)).view({1, -1});
     params.torque_limits = torch::tensor(ReadVectorFromYaml<double>(config["torque_limits"], params.framework, rows, cols)).view({1, -1});
     params.default_dof_pos = torch::tensor(ReadVectorFromYaml<double>(config["default_dof_pos"], params.framework, rows, cols)).view({1, -1});
 //    params.joint_controller_names = ReadVectorFromYaml<std::string>(config["joint_controller_names"], params.framework, rows, cols);
-}
-
-void rl_sdk::CSVInit(std::string robot_name)
-{
-    csv_filename = std::string(CMAKE_CURRENT_SOURCE_DIR) + "/models/" + robot_name + "/motor";
-
-    csv_filename += ".csv";
-    std::ofstream file(csv_filename.c_str());
-
-    for(int i = 0; i < 12; ++i) {file << "tau_cal_" << i << ",";}
-    for(int i = 0; i < 12; ++i) {file << "tau_est_" << i << ",";}
-    for(int i = 0; i < 12; ++i) {file << "joint_pos_" << i << ",";}
-    for(int i = 0; i < 12; ++i) {file << "joint_pos_target_" << i << ",";}
-    for(int i = 0; i < 12; ++i) {file << "joint_vel_" << i << ",";}
-
-    file << std::endl;
-
-    file.close();
-}
-
-void rl_sdk::CSVLogger(torch::Tensor torque, torch::Tensor tau_est, torch::Tensor joint_pos, torch::Tensor joint_pos_target, torch::Tensor joint_vel)
-{
-    std::ofstream file(csv_filename.c_str(), std::ios_base::app);
-
-    for(int i = 0; i < 12; ++i) {file << torque[0][i].item<double>() << ",";}
-    for(int i = 0; i < 12; ++i) {file << tau_est[0][i].item<double>() << ",";}
-    for(int i = 0; i < 12; ++i) {file << joint_pos[0][i].item<double>() << ",";}
-    for(int i = 0; i < 12; ++i) {file << joint_pos_target[0][i].item<double>() << ",";}
-    for(int i = 0; i < 12; ++i) {file << joint_vel[0][i].item<double>() << ",";}
-
-    file << std::endl;
-
-    file.close();
 }
 
 torch::Tensor rl_sdk::Forward()
