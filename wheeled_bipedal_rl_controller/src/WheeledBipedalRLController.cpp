@@ -22,6 +22,7 @@ bool WheeledBipedalRLController::init(hardware_interface::RobotHW* robot_hw, ros
   jointHandles_.push_back(effortJointInterface->getHandle("right_wheel_joint"));
   imuSensorHandle_ = robot_hw->get<hardware_interface::ImuSensorInterface>()->getHandle("base_imu");
   robotStateHandle_ = robot_hw->get<hardware_interface::RobotStateInterface>()->getHandle("robot_state");
+
   // gazebo_service
   controller_nh.param<std::string>("gazebo_model_name", gazebo_model_name_, "");
   gazebo_set_model_state_client_ = controller_nh.serviceClient<gazebo_msgs::SetModelState>("/gazebo/set_model_state");
@@ -50,6 +51,15 @@ bool WheeledBipedalRLController::init(hardware_interface::RobotHW* robot_hw, ros
   robotStatePub_ = controller_nh.advertise<rl_msgs::RobotState>("/rl/robot_state", 10);
   rlCommandSub_ = controller_nh.subscribe("/rl/command", 1, &WheeledBipedalRLController::rlCommandCB, this);
 
+  controller_nh.param("default_length", default_length_, 0.18);
+  geometry_msgs::Twist initTwist;
+  initTwist.linear.x = 0.05;
+  initTwist.linear.y = 0.0;
+  initTwist.linear.z = default_length_;
+  initTwist.angular.x = 0.0;
+  initTwist.angular.y = 0.0;
+  initTwist.angular.z = 0.0;
+  cmdRtBuffer_.initRT(initTwist);
   return true;
 }
 
@@ -108,12 +118,23 @@ void WheeledBipedalRLController::pubRLState()
     robotStateMsg_.joint_states.effort[i] = jointHandles_[i].getEffort();
   }
 
-  robotStateMsg_.commands[0] = 0.05;
-  robotStateMsg_.commands[1] = 0.;
-  robotStateMsg_.commands[3] = 0.18;
-//  robotStateMsg_.commands[0] = cmdRtBuffer_.readFromRT()->linear.x;
-//  robotStateMsg_.commands[1] = cmdRtBuffer_.readFromRT()->angular.z;
-//  robotStateMsg_.commands[2] = cmdRtBuffer_.readFromRT()->linear.z;
+  auto cmdBuff = cmdRtBuffer_.readFromRT();
+  double linear_x = cmdBuff->linear.x;
+  double angular_z = cmdBuff->angular.z;
+  double linear_z = cmdBuff->linear.z;
+
+  if (linear_x != 0.0 || angular_z != 0.0 || linear_z != 0.0)
+  {
+    robotStateMsg_.commands[0] = linear_x;
+    robotStateMsg_.commands[1] = angular_z;
+    robotStateMsg_.commands[2] = default_length_ + linear_z;
+  }
+  else
+  {
+    robotStateMsg_.commands[0] = 0;
+    robotStateMsg_.commands[1] = 0;
+    robotStateMsg_.commands[2] = default_length_;
+  }
   robotStatePub_.publish(robotStateMsg_);
 }
 
@@ -169,7 +190,8 @@ void WheeledBipedalRLController::initStateMsg()
 
   robotStateMsg_.commands.clear();
   robotStateMsg_.commands.resize(3);
-  robotStateMsg_.commands[2] = 0.18; // init_pos_z
+  robotStateMsg_.commands[0] = 0.0;
+  robotStateMsg_.commands[2] = default_length_; // init_pos_z
 }
 
 }  // namespace rl_controller

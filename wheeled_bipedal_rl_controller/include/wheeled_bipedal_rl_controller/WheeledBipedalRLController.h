@@ -76,6 +76,7 @@ private:
 
   // Low level controller
   std::vector<control_toolbox::Pid> Pids_;
+  double default_length_;
 
   // rl_interface
   rl_msgs::RobotState robotStateMsg_;
