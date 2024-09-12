@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
         roscpp
         std_msgs
         geometry_msgs
+        rl_msgs
 )
 catkin_package(
         INCLUDE_DIRS
@@ -42,6 +43,10 @@ include_directories(
 add_library(${PROJECT_NAME} src/rl_sdk.cpp library/observation_buffer/observation_buffer.cpp)
 target_link_libraries(${PROJECT_NAME} ${TORCH_LIBRARIES} ${YAML_CPP_LIBRARIES})
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 14)
+
+add_executable(rl_interface src/rl_interface.cpp src/rl_sdk.cpp)
+target_link_libraries(rl_interface ${PROJECT_NAME} ${TORCH_LIBRARIES} ${YAML_CPP_LIBRARIES} ${catkin_LIBRARIES})
+
 
 install(
         TARGETS ${PROJECT_NAME}

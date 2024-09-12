@@ -48,19 +48,8 @@ struct RobotState
     } motor_state;
 };
 
-enum STATE {
-    STATE_WAITING = 0,
-    STATE_POS_GETUP,
-    STATE_RL_INIT,
-    STATE_RL_RUNNING,
-    STATE_POS_GETDOWN,
-    STATE_RESET_SIMULATION,
-    STATE_TOGGLE_SIMULATION,
-};
-
 struct Control
 {
-    STATE control_state;
     double vel_x = 0.0;
     double vel_yaw = 0.0;
     double pos_z = 0.0;
@@ -78,7 +67,6 @@ struct ModelParams
     double damping;
     double stiffness;
     double action_scale;
-    double hip_scale_reduction;
     std::vector<int> hip_scale_reduction_indices;
     int num_of_dofs;
     double lin_vel_scale;
@@ -128,11 +116,9 @@ public:
     void InitControl();
 
     // rl functions
-    torch::Tensor Forward(std::shared_ptr<torch::Tensor> history_obs, std::shared_ptr<ObservationBuffer> history_obs_buf);
+    torch::Tensor Forward();
     torch::Tensor ComputeObservation();
     void SetObservation();
-//    virtual void SetCommand(const RobotCommand<double> *command) = 0;
-    void StateController(const RobotState<double> *state, RobotCommand<double> *command);
     torch::Tensor ComputeTorques(torch::Tensor actions);
     torch::Tensor ComputePosition(torch::Tensor actions);
     torch::Tensor ComputeVelocity(torch::Tensor actions);
@@ -148,11 +134,9 @@ public:
 
     // control
     Control control;
-    void KeyboardInterface();
 
     // others
     std::string robot_name;
-    STATE running_state = STATE_RL_RUNNING; // default running_state set to STATE_RL_RUNNING
     bool simulation_running = false;
 
     // protect func
