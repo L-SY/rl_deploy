@@ -18,6 +18,7 @@
   <depend>control_toolbox</depend>
   <depend>robot_common</depend>
   <depend>rl_sdk</depend>
+  <depend>rl_msgs</depend>
   <depend>gazebo_ros</depend>
 
   <export>

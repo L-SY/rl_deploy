@@ -12,35 +12,11 @@ namespace rl_controller
 bool WheeledBipedalRLController::init(hardware_interface::RobotHW* robot_hw, ros::NodeHandle& root_nh,
                                               ros::NodeHandle& controller_nh)
 {
-  // read params from yaml
-  controller_nh.param<std::string>("robot_name", rlActing_.robot_name, "");
-  std::string rl_path;
-  controller_nh.param<std::string>("rl_path", rl_path, "");
-  std::string config_path = std::string(rl_path + "/config.yaml");
-  rlActing_.ReadYaml(config_path);
-
-  // model
-  std::string model_path = std::string(rl_path + "/" + rlActing_.params.model_name);
-  rlActing_.model = torch::jit::load(model_path);
-//  rlActing_.model.dump(true,false,false);
-
-  // init
-  torch::autograd::GradMode::set_enabled(false);
-  rlActing_.InitObservations();
-  rlActing_.InitOutputs();
-  rlActing_.InitControl();
   //  for (size_t i = 0; i < jointHandles_.size(); ++i) {
   //    auto pid =
   //    Pids_.push_back()
   //  }
 
-  // history
-  history_obs_ptr_ = std::make_shared<torch::Tensor>(torch::zeros({rlActing_.params.num_observations}));
-
-  if(rlActing_.params.use_history)
-  {
-    history_obs_buf_ptr_ = std::make_shared<ObservationBuffer>(1, rlActing_.params.num_observations, 3);
-  }
   // Hardware interface
   auto* effortJointInterface = robot_hw->get<hardware_interface::EffortJointInterface>();
   jointHandles_.push_back(effortJointInterface->getHandle("left_hip_joint"));
@@ -58,51 +34,26 @@ bool WheeledBipedalRLController::init(hardware_interface::RobotHW* robot_hw, ros
   gazebo_unpause_physics_client_ = controller_nh.serviceClient<std_srvs::Empty>("/gazebo/unpause_physics");
 
   cmdSub_ = controller_nh.subscribe("command", 1, &WheeledBipedalRLController::commandCB, this);
+
+  // init
+  initStateMsg();
+
+  // rl_interface
+  robotStatePub_ = controller_nh.advertise<rl_msgs::RobotState>("/rl/robot_state", 10);
+  rlCommandSub_ = controller_nh.subscribe("/rl/command", 1, &WheeledBipedalRLController::rlCommandCB, this);
   return true;
 }
 
 void WheeledBipedalRLController::starting(const ros::Time& /*unused*/)
 {
   controllerState_ = NORMAL;
-
 }
 
 void WheeledBipedalRLController::update(const ros::Time& time, const ros::Duration& period)
 {
-  //  if (state_ !=  geometry_msgs::Twist.mode)
-  //  {
-  //    state_ =  geometry_msgs::Twist.mode;
-  //    stateChanged_ = true;
-  //  }
-//  switch (state_)
-//  {
-//    case rl_controller::NORMAL:
-//      normal(time, period);
-//      break;
-//  }
-  std::string path = "/home/lsy/rl_ws/src/assets/diablo/models/policy_27.pt";
 
-  torch::jit::script::Module model;
-  try {
-    model = torch::jit::load(path);
-  } catch (const c10::Error& e) {
-    std::cerr << "Error loading the model.\n";
-  }
-
-  std::cout << "Model loaded successfully.\n";
-
-  torch::Tensor input_tensor = torch::rand({1, 27});
-  std::cout << "input_tensor" << input_tensor.sizes() << std::endl;
-
-  torch::Tensor output_tensor;
-  try {
-    output_tensor = model.forward({input_tensor}).toTensor();
-  } catch (const c10::Error& e) {
-    std::cerr << "Error during forward pass.\n";
-  }
-
-  std::cout << "Output tensor: " << output_tensor << std::endl;
   rl(time,period);
+  pubRLState();
 }
 
 void WheeledBipedalRLController::normal(const ros::Time& time, const ros::Duration& period)
@@ -113,69 +64,82 @@ void WheeledBipedalRLController::normal(const ros::Time& time, const ros::Durati
 void WheeledBipedalRLController::rl(const ros::Time& time, const ros::Duration& period)
 {
 //TODO ：add set control.x, control.y, control.yaw.
-  rlActing_.control.vel_x = 0.;
-  rlActing_.control.vel_yaw = 0.;
-  rlActing_.control.pos_z = 0.20;
-  setRLState();
-  rlActing_.SetObservation();
-
-  torch::Tensor clamped_actions = rlActing_.Forward();
-
-  rlActing_.obs.actions = clamped_actions;
-
-  torch::Tensor origin_output_torques = rlActing_.ComputeTorques(rlActing_.obs.actions);
-
-  // rlActing_.TorqueProtect(origin_output_torques);
-
-  rlActing_.output_torques = torch::clamp(origin_output_torques, -(rlActing_.params.torque_limits), rlActing_.params.torque_limits);
-  rlActing_.output_dof_pos = rlActing_.ComputePosition(rlActing_.obs.actions);
-  rlActing_.output_dof_vel = rlActing_.ComputeVelocity(rlActing_.obs.actions);
   setCommand();
 }
 
-void WheeledBipedalRLController::commandCB(const  geometry_msgs::Twist& msg)
+void WheeledBipedalRLController::commandCB(const geometry_msgs::Twist& msg)
 {
   cmdRtBuffer_.writeFromNonRT(msg);
 }
 
-void WheeledBipedalRLController::setRLState()
+void WheeledBipedalRLController::rlCommandCB(const std_msgs::Float64MultiArray&  msg)
 {
-  auto quaternion = imuSensorHandle_.getOrientation();
-  auto gyroscope = imuSensorHandle_.getAngularVelocity();
-  if(rlActing_.params.framework == "isaacgym")
+  rlCmdRtBuffer_.writeFromNonRT(msg);
+}
+
+void WheeledBipedalRLController::pubRLState()
+{
+  robotStateMsg_.imu_states.header.frame_id = imuSensorHandle_.getName();
+  robotStateMsg_.imu_states.orientation.x = imuSensorHandle_.getOrientation()[0];
+  robotStateMsg_.imu_states.orientation.y = imuSensorHandle_.getOrientation()[1];
+  robotStateMsg_.imu_states.orientation.z = imuSensorHandle_.getOrientation()[2];
+  robotStateMsg_.imu_states.orientation.w = imuSensorHandle_.getOrientation()[3];
+  robotStateMsg_.imu_states.angular_velocity.x = imuSensorHandle_.getAngularVelocity()[0];
+  robotStateMsg_.imu_states.angular_velocity.y = imuSensorHandle_.getAngularVelocity()[1];
+  robotStateMsg_.imu_states.angular_velocity.z = imuSensorHandle_.getAngularVelocity()[2];
+  robotStateMsg_.imu_states.linear_acceleration.x = imuSensorHandle_.getLinearAcceleration()[0];
+  robotStateMsg_.imu_states.linear_acceleration.y = imuSensorHandle_.getLinearAcceleration()[1];
+  robotStateMsg_.imu_states.linear_acceleration.z = imuSensorHandle_.getLinearAcceleration()[2];
+
+  for(size_t i = 0; i < jointHandles_.size(); ++i)
   {
-    rlActing_.robot_state.imu.quaternion[3] = quaternion[3];
-    rlActing_.robot_state.imu.quaternion[0] = quaternion[0];
-    rlActing_.robot_state.imu.quaternion[1] = quaternion[1];
-    rlActing_.robot_state.imu.quaternion[2] = quaternion[2];
-  }
-  else if(rlActing_.params.framework == "isaacsim")
-  {
-    rlActing_.robot_state.imu.quaternion[0] = quaternion[3];
-    rlActing_.robot_state.imu.quaternion[1] = quaternion[0];
-    rlActing_.robot_state.imu.quaternion[2] = quaternion[1];
-    rlActing_.robot_state.imu.quaternion[3] = quaternion[2];
+    robotStateMsg_.joint_states.name[i] = jointHandles_[i].getName();
+    robotStateMsg_.joint_states.position[i] = jointHandles_[i].getPosition();
+    robotStateMsg_.joint_states.velocity[i] = jointHandles_[i].getVelocity();
+    robotStateMsg_.joint_states.effort[i] = jointHandles_[i].getEffort();
   }
 
-  rlActing_.robot_state.imu.gyroscope[0] = gyroscope[0];
-  rlActing_.robot_state.imu.gyroscope[1] = gyroscope[1];
-  rlActing_.robot_state.imu.gyroscope[2] = gyroscope[2];
-
-  // The order is determined by the Hardware interface in init.
-  for(int i = 0; i < rlActing_.params.num_of_dofs; ++i)
-  {
-    rlActing_.robot_state.motor_state.q[i] = jointHandles_[i].getPosition();
-    rlActing_.robot_state.motor_state.dq[i] = jointHandles_[i].getVelocity();
-    rlActing_.robot_state.motor_state.tauEst[i] = jointHandles_[i].getEffort();
-  }
+  robotStateMsg_.commands[0] = cmdRtBuffer_.readFromRT()->linear.x;
+  robotStateMsg_.commands[1] = cmdRtBuffer_.readFromRT()->angular.z;
+  robotStateMsg_.commands[2] = cmdRtBuffer_.readFromRT()->linear.z;
 }
 
 void WheeledBipedalRLController::setCommand()
 {
   for (size_t i = 0; i < jointHandles_.size(); ++i) {
-    jointHandles_[i].setCommand(rlActing_.output_dof_pos[0][i].item<double>());
+    jointHandles_[i].setCommand(rlCmdRtBuffer_.readFromRT()->data[i]);
   }
 }
+
+void WheeledBipedalRLController::initStateMsg()
+{
+  robotStateMsg_.imu_states.header.frame_id = "";
+  robotStateMsg_.imu_states.orientation.x = 0.0;
+  robotStateMsg_.imu_states.orientation.y = 0.0;
+  robotStateMsg_.imu_states.orientation.z = 0.0;
+  robotStateMsg_.imu_states.orientation.w = 0.0;
+  robotStateMsg_.imu_states.angular_velocity.x = 0.0;
+  robotStateMsg_.imu_states.angular_velocity.y = 0.0;
+  robotStateMsg_.imu_states.angular_velocity.z = 0.0;
+  robotStateMsg_.imu_states.linear_acceleration.x = 0.0;
+  robotStateMsg_.imu_states.linear_acceleration.y = 0.0;
+  robotStateMsg_.imu_states.linear_acceleration.z = 0.0;
+
+  size_t num_joints = jointHandles_.size();
+  robotStateMsg_.joint_states.name.clear();
+  robotStateMsg_.joint_states.position.clear();
+  robotStateMsg_.joint_states.velocity.clear();
+  robotStateMsg_.joint_states.effort.clear();
+  robotStateMsg_.joint_states.name.resize(num_joints);
+  robotStateMsg_.joint_states.position.resize(num_joints);
+  robotStateMsg_.joint_states.velocity.resize(num_joints);
+  robotStateMsg_.joint_states.effort.resize(num_joints);
+
+  robotStateMsg_.commands.clear();
+  robotStateMsg_.commands.resize(3);
+  robotStateMsg_.commands[2] = 0.15; // init_pos_z
+}
+
 }  // namespace rl_controller
 
 PLUGINLIB_EXPORT_CLASS(rl_controller::WheeledBipedalRLController, controller_interface::ControllerBase)

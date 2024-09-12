@@ -23,10 +23,11 @@
 #include <gazebo_msgs/SetModelState.h>
 #include "std_srvs/Empty.h"
 
-// rl
-#include <torch/script.h>
-#include "rl_sdk/rl_sdk.hpp"
-#include "observation_buffer.hpp"
+// robot_state
+#include "sensor_msgs/JointState.h"
+#include "sensor_msgs/Imu.h"
+#include "rl_msgs/RobotState.h"
+#include "std_msgs/Float64MultiArray.h"
 
 namespace rl_controller
 {
@@ -47,12 +48,13 @@ public:
   void starting(const ros::Time& time) override;
   void update(const ros::Time& time, const ros::Duration& period) override;
   void setCommand();
-  void setRLState();
-
+  void pubRLState();
+  void initStateMsg();
 private:
   void normal(const ros::Time& time, const ros::Duration& period);
   void rl(const ros::Time& time, const ros::Duration& period);
   void commandCB(const geometry_msgs::Twist& msg);
+  void rlCommandCB(const std_msgs::Float64MultiArray& msg);
 
   int controllerState_ = NORMAL;
   ros::Time startTime_;
@@ -64,14 +66,6 @@ private:
   hardware_interface::ImuSensorHandle imuSensorHandle_;
   std::vector<hardware_interface::JointHandle> jointHandles_;
 
-  // RL
-  rl_sdk rlActing_;
-
-
-  // history buffer
-  std::shared_ptr<torch::Tensor> history_obs_ptr_;
-  std::shared_ptr<ObservationBuffer> history_obs_buf_ptr_;
-
   //  Gazebo Service
   std::string gazebo_model_name_;
   ros::ServiceClient gazebo_set_model_state_client_;
@@ -82,6 +76,12 @@ private:
 
   // Low level controller
   std::vector<control_toolbox::Pid> Pids_;
+
+  // rl_interface
+  rl_msgs::RobotState robotStateMsg_;
+  ros::Publisher robotStatePub_;
+  ros::Subscriber rlCommandSub_;
+  realtime_tools::RealtimeBuffer<std_msgs::Float64MultiArray> rlCmdRtBuffer_{};
 };
 
 }  // namespace rl_controller

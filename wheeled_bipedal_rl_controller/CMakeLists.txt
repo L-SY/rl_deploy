@@ -19,6 +19,7 @@ set(CATKIN_PACKAGE_DEPENDENCIES
         robot_common
         rl_sdk
         gazebo_ros
+        rl_msgs
 )
 
 ## Find catkin macros and libraries
