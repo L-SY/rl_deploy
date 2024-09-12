@@ -8,6 +8,8 @@
 #include <yaml-cpp/yaml.h>
 #include "observation_buffer.hpp"
 
+// ref: https://github.com/fan-ziqi/rl_sar
+
 namespace LOGGER {
     const char* const INFO    = "\033[0;37m[INFO]\033[0m ";
     const char* const WARNING = "\033[0;33m[WARNING]\033[0m ";
