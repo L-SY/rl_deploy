@@ -73,7 +73,7 @@ void WheeledBipedalRLController::normal(const ros::Time& time, const ros::Durati
 void WheeledBipedalRLController::rl(const ros::Time& time, const ros::Duration& period)
 {
 //TODO ：add set control.x, control.y, control.yaw.
-  setCommand();
+  setCommand(period);
 }
 
 void WheeledBipedalRLController::commandCB(const geometry_msgs::Twist& msg)
@@ -108,15 +108,19 @@ void WheeledBipedalRLController::pubRLState()
     robotStateMsg_.joint_states.effort[i] = jointHandles_[i].getEffort();
   }
 
-  robotStateMsg_.commands[0] = cmdRtBuffer_.readFromRT()->linear.x;
-  robotStateMsg_.commands[1] = cmdRtBuffer_.readFromRT()->angular.z;
-  robotStateMsg_.commands[2] = cmdRtBuffer_.readFromRT()->linear.z;
+  robotStateMsg_.commands[0] = 0.05;
+  robotStateMsg_.commands[1] = 0.;
+  robotStateMsg_.commands[3] = 0.18;
+//  robotStateMsg_.commands[0] = cmdRtBuffer_.readFromRT()->linear.x;
+//  robotStateMsg_.commands[1] = cmdRtBuffer_.readFromRT()->angular.z;
+//  robotStateMsg_.commands[2] = cmdRtBuffer_.readFromRT()->linear.z;
+  robotStatePub_.publish(robotStateMsg_);
 }
 
-void WheeledBipedalRLController::setCommand()
+void WheeledBipedalRLController::setCommand(const ros::Duration& period)
 {
   auto rt_buffer = rlCmdRtBuffer_.readFromRT();
-  const auto& data = rt_buffer->data;  // 提前缓存数据指针，减少重复函数调用
+  const auto& data = rt_buffer->data;
 
   if (data.empty())
   {
@@ -126,10 +130,16 @@ void WheeledBipedalRLController::setCommand()
   }
   else
   {
-    for (size_t i = 0; i < jointHandles_.size(); ++i) {
-//      double commanded_effort = Pids_[i].computeCommand(desJointStates.position - effortJointHandles_[i].getPosition(), period);
-      jointHandles_[i].setCommand(data[i]);
-    }
+    jointHandles_[0].setCommand(Pids_[0].computeCommand(data[0]-jointHandles_[0].getPosition(),period));
+    jointHandles_[1].setCommand(Pids_[1].computeCommand(data[1]-jointHandles_[1].getPosition(),period));
+    jointHandles_[3].setCommand(Pids_[3].computeCommand(data[3]-jointHandles_[3].getPosition(),period));
+    jointHandles_[4].setCommand(Pids_[4].computeCommand(data[4]-jointHandles_[4].getPosition(),period));
+
+//    TODO: 20 should be add in rl_interface
+    jointHandles_[2].setCommand(Pids_[2].computeCommand(data[2]*20-jointHandles_[2].getVelocity(),period));
+    jointHandles_[5].setCommand(Pids_[5].computeCommand(data[5]*20-jointHandles_[5].getVelocity(),period));
+//    jointHandles_[2].setCommand(Pids_[2].computeCommand(data[2]-jointHandles_[2].getVelocity(),period));
+//    jointHandles_[5].setCommand(Pids_[5].computeCommand(data[5]-jointHandles_[5].getVelocity(),period));
   }
 }
 
@@ -159,7 +169,7 @@ void WheeledBipedalRLController::initStateMsg()
 
   robotStateMsg_.commands.clear();
   robotStateMsg_.commands.resize(3);
-  robotStateMsg_.commands[2] = 0.15; // init_pos_z
+  robotStateMsg_.commands[2] = 0.18; // init_pos_z
 }
 
 }  // namespace rl_controller

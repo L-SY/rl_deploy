@@ -83,13 +83,8 @@ void rl_sdk::InitControl()
 torch::Tensor rl_sdk::ComputeTorques(torch::Tensor actions)
 {
     torch::Tensor actions_scaled = actions * params.action_scale;
-    torch::Tensor output_torques = params.rl_kp * (actions_scaled + params.default_dof_pos - obs.dof_pos) - params.rl_kd * obs.dof_vel;
-//    torch::Tensor pos_torques = params.rl_kp * (actions_scaled + params.default_dof_pos - obs.dof_pos) - params.rl_kd * obs.dof_vel;
-//    torch::Tensor vel_torques = params.rl_kp * (actions_scaled - obs.dof_vel);
-//    output_torques.index_put_({torch::indexing::Slice(0, 2)}, pos_torques.index({torch::indexing::Slice(0, 2)}));
-//    output_torques.index_put_({2,5}, vel_torques.index({2,5}));
-//    output_torques.index_put_({torch::indexing::Slice(2, 4)}, pos_torques.index({torch::indexing::Slice(2, 4)}));
-
+    torch::Tensor pos_torques = actions_scaled + params.default_dof_pos ;
+    output_torques = pos_torques;
     return output_torques;
 }
 
@@ -262,8 +257,9 @@ void rl_sdk::ReadYaml(const std::string config_path)
     params.ang_vel_scale = config["ang_vel_scale"].as<double>();
     params.dof_pos_scale = config["dof_pos_scale"].as<double>();
     params.dof_vel_scale = config["dof_vel_scale"].as<double>();
-    // params.commands_scale = torch::tensor(ReadVectorFromYaml<double>(config["commands_scale"])).view({1, -1});
-    params.commands_scale = torch::tensor({params.lin_vel_scale, params.lin_vel_scale, params.ang_vel_scale});
+//    params.commands_scale = torch::tensor(ReadVectorFromYaml<double>(config["commands_scale"])).view({1, -1});
+//    params.commands_scale = torch::tensor({params.lin_vel_scale, params.lin_vel_scale, params.ang_vel_scale});
+    params.commands_scale = torch::tensor({params.lin_vel_scale, params.ang_vel_scale, 5.0});
     params.rl_kp = torch::tensor(ReadVectorFromYaml<double>(config["rl_kp"], params.framework, rows, cols)).view({1, -1});
     params.rl_kd = torch::tensor(ReadVectorFromYaml<double>(config["rl_kd"], params.framework, rows, cols)).view({1, -1});
 //    params.fixed_kp = torch::tensor(ReadVectorFromYaml<double>(config["fixed_kp"], params.framework, rows, cols)).view({1, -1});

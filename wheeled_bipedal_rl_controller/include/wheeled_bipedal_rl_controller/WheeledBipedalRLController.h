@@ -47,7 +47,7 @@ public:
   bool init(hardware_interface::RobotHW* robot_hw, ros::NodeHandle& root_nh, ros::NodeHandle& controller_nh) override;
   void starting(const ros::Time& time) override;
   void update(const ros::Time& time, const ros::Duration& period) override;
-  void setCommand();
+  void setCommand(const ros::Duration& period);
   void pubRLState();
   void initStateMsg();
 private:

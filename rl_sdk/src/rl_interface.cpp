@@ -15,7 +15,7 @@ public:
   {
     // rl interface
     int frequency;
-    nh_.param("frequency", frequency, 50);
+    nh_.param("frequency", frequency, 10);
     robotStateSub_ = nh_.subscribe("/rl/robot_state", 1, &RLInterface::robotStateCB, this);
     rlCommandPub_ = nh_.advertise<std_msgs::Float64MultiArray>("/rl/command", 10);
     loop_rate_ = new ros::Rate(frequency);
@@ -48,8 +48,6 @@ public:
 
   void update()
   {
-    while (ros::ok())
-    {
       torch::Tensor clamped_actions = Forward();
       obs.actions = clamped_actions;
       torch::Tensor origin_output_torques = ComputeTorques(obs.actions);
@@ -57,8 +55,8 @@ public:
       output_torques = torch::clamp(origin_output_torques, -(params.torque_limits), params.torque_limits);
       output_dof_pos = ComputePosition(obs.actions);
       output_dof_vel = ComputeVelocity(obs.actions);
-      ROS_INFO_STREAM(obs.actions);
-      // TODO: only test
+      ROS_INFO_STREAM(output_torques[0]);
+
       std_msgs::Float64MultiArray commandMsg;
       for (int i = 0; i < params.num_of_dofs; ++i) {
         commandMsg.data.push_back(output_torques[0][i].item<double>());
@@ -66,9 +64,6 @@ public:
       rlCommandPub_.publish(commandMsg);
 
       SetObservation();
-
-      ros::spinOnce();
-    }
   }
 
 private:
@@ -97,7 +92,6 @@ private:
       robot_state.imu.quaternion[3] = msg.imu_states.orientation.z;
     }
 
-//    TODO: CHANGE TO RPY
     robot_state.imu.gyroscope[0] = msg.imu_states.angular_velocity.x;
     robot_state.imu.gyroscope[1] = msg.imu_states.angular_velocity.y;
     robot_state.imu.gyroscope[2] = msg.imu_states.angular_velocity.z;
@@ -108,6 +102,10 @@ private:
       robot_state.motor_state.dq[i] = msg.joint_states.velocity[i];
       robot_state.motor_state.tauEst[i] = msg.joint_states.effort[i];
     }
+
+    control.vel_x = msg.commands[0];
+    control.vel_yaw = msg.commands[1];
+    control.pos_z = msg.commands[2];
   }
 };
 
@@ -117,8 +115,13 @@ int main(int argc, char **argv)
   ros::NodeHandle nh("~");
 
   RLInterface rl_interface(nh);
-  rl_interface.update();
-
+  ros::Rate loop_rate(10);
+  while (ros::ok())
+  {
+    ros::spinOnce();
+    rl_interface.update();
+    loop_rate.sleep();
+  }
   return 0;
 }
 
