@@ -67,6 +67,7 @@ private:
   // RL
   rl_sdk rlActing_;
 
+
   // history buffer
   std::shared_ptr<torch::Tensor> history_obs_ptr_;
   std::shared_ptr<ObservationBuffer> history_obs_buf_ptr_;

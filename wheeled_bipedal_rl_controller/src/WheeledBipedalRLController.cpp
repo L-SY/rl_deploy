@@ -5,6 +5,7 @@
 #include <string>
 #include <pluginlib/class_list_macros.h>
 #include "wheeled_bipedal_rl_controller/WheeledBipedalRLController.h"
+#include <torch/script.h>
 
 namespace rl_controller
 {
@@ -22,6 +23,7 @@ bool WheeledBipedalRLController::init(hardware_interface::RobotHW* robot_hw, ros
   std::string model_path = std::string(rl_path + "/" + rlActing_.params.model_name);
   rlActing_.model = torch::jit::load(model_path);
 //  rlActing_.model.dump(true,false,false);
+
   // init
   torch::autograd::GradMode::set_enabled(false);
   rlActing_.InitObservations();
@@ -62,6 +64,7 @@ bool WheeledBipedalRLController::init(hardware_interface::RobotHW* robot_hw, ros
 void WheeledBipedalRLController::starting(const ros::Time& /*unused*/)
 {
   controllerState_ = NORMAL;
+
 }
 
 void WheeledBipedalRLController::update(const ros::Time& time, const ros::Duration& period)
@@ -77,6 +80,28 @@ void WheeledBipedalRLController::update(const ros::Time& time, const ros::Durati
 //      normal(time, period);
 //      break;
 //  }
+  std::string path = "/home/lsy/rl_ws/src/assets/diablo/models/policy_27.pt";
+
+  torch::jit::script::Module model;
+  try {
+    model = torch::jit::load(path);
+  } catch (const c10::Error& e) {
+    std::cerr << "Error loading the model.\n";
+  }
+
+  std::cout << "Model loaded successfully.\n";
+
+  torch::Tensor input_tensor = torch::rand({1, 27});
+  std::cout << "input_tensor" << input_tensor.sizes() << std::endl;
+
+  torch::Tensor output_tensor;
+  try {
+    output_tensor = model.forward({input_tensor}).toTensor();
+  } catch (const c10::Error& e) {
+    std::cerr << "Error during forward pass.\n";
+  }
+
+  std::cout << "Output tensor: " << output_tensor << std::endl;
   rl(time,period);
 }
 
@@ -94,7 +119,7 @@ void WheeledBipedalRLController::rl(const ros::Time& time, const ros::Duration& 
   setRLState();
   rlActing_.SetObservation();
 
-  torch::Tensor clamped_actions = rlActing_.Forward(history_obs_ptr_, history_obs_buf_ptr_);
+  torch::Tensor clamped_actions = rlActing_.Forward();
 
   rlActing_.obs.actions = clamped_actions;
 

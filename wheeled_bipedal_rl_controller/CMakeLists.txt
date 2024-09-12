@@ -58,6 +58,17 @@ add_library(${PROJECT_NAME}
 
 target_link_libraries(${PROJECT_NAME}
         ${catkin_LIBRARIES}
+        ${TORCH_LIBRARIES}
+)
+
+## Declare cpp executables
+add_executable(obs2action
+        test/obs2action.cpp
+)
+
+target_link_libraries(obs2action
+        ${catkin_LIBRARIES}
+        ${TORCH_LIBRARIES}
 )
 
 #############
