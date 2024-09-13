@@ -48,14 +48,14 @@ bool WheeledBipedalRLController::init(hardware_interface::RobotHW* robot_hw, ros
   }
 
   // rl_interface
-  robotStatePub_ = controller_nh.advertise<rl_msgs::RobotState>("/rl/robot_state", 10);
+  robotStatePub_ = controller_nh.advertise<rl_msgs::RobotState>("/rl/robot_state", 1);
   rlCommandSub_ = controller_nh.subscribe("/rl/command", 1, &WheeledBipedalRLController::rlCommandCB, this);
 
   controller_nh.param("default_length", default_length_, 0.18);
   geometry_msgs::Twist initTwist;
-  initTwist.linear.x = 0.05;
+  initTwist.linear.x = 0.00;
   initTwist.linear.y = 0.0;
-  initTwist.linear.z = default_length_;
+  initTwist.linear.z = 0.0;
   initTwist.angular.x = 0.0;
   initTwist.angular.y = 0.0;
   initTwist.angular.z = 0.0;
@@ -123,18 +123,10 @@ void WheeledBipedalRLController::pubRLState()
   double angular_z = cmdBuff->angular.z;
   double linear_z = cmdBuff->linear.z;
 
-  if (linear_x != 0.0 || angular_z != 0.0 || linear_z != 0.0)
-  {
-    robotStateMsg_.commands[0] = linear_x;
-    robotStateMsg_.commands[1] = angular_z;
-    robotStateMsg_.commands[2] = default_length_ + linear_z;
-  }
-  else
-  {
-    robotStateMsg_.commands[0] = 0;
-    robotStateMsg_.commands[1] = 0;
-    robotStateMsg_.commands[2] = default_length_;
-  }
+  robotStateMsg_.commands[0] = linear_x;
+  robotStateMsg_.commands[1] = angular_z;
+  robotStateMsg_.commands[2] = default_length_ + linear_z;
+
   robotStatePub_.publish(robotStateMsg_);
 }
 
@@ -191,6 +183,7 @@ void WheeledBipedalRLController::initStateMsg()
   robotStateMsg_.commands.clear();
   robotStateMsg_.commands.resize(3);
   robotStateMsg_.commands[0] = 0.0;
+  robotStateMsg_.commands[1] = 0.0;
   robotStateMsg_.commands[2] = default_length_; // init_pos_z
 }
 

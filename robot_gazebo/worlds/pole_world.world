@@ -1,0 +1,126 @@
+<?xml version="1.0" ?>
+
+<sdf version="1.5">
+    <world name="default">
+        <!-- Target real time factor is the product of max_step_size and real_time_update_rate -->
+        <!-- Negative real_time_update_rate means that Gazebo will run as fast as possible -->
+        <physics type="ode">
+            <type>world</type>
+            <max_step_size>0.001</max_step_size>
+            <real_time_update_rate>1000</real_time_update_rate>
+            <iters>500</iters>
+        </physics>
+        <!-- A global light source -->
+        <include>
+            <uri>model://sun</uri>
+        </include>
+        <!-- A ground plane -->
+        <include>
+            <uri>model://ground_plane</uri>
+        </include>
+        <model name="pole">
+                <static>true</static>
+                <link name="link_mid">
+                    <collision name="collision">
+                        <geometry>
+                            <box>
+                                <size>1 0.12 0.15</size>
+                            </box>
+                        </geometry>
+                        <pose>0 0 0 0 0 0</pose>
+                    </collision>
+                    <visual name="visual">
+                        <geometry>
+                            <box>
+                                <size>1 0.12 0.15</size>
+                            </box>
+                        </geometry>
+                        <material>
+                            <script>
+                                <uri>file://media/materials/scripts/gazebo.material</uri>
+                                <name>Gazebo/Green</name>
+                            </script>
+                        </material>
+                        <pose>0 0 0 0 0 0</pose>
+                    </visual>
+                    <pose>0 0 0 0 0 0</pose>
+                </link>
+                <link name="link_back">
+                    <collision name="collision">
+                        <geometry>
+                            <box>
+                                <size>0.2 1 0.15</size>
+                            </box>
+                        </geometry>
+                        <pose>-0.1 0 0 0 0 0</pose>
+                    </collision>
+                    <visual name="visual">
+                        <geometry>
+                            <box>
+                                <size>0.2 1 0.15</size>
+                            </box>
+                        </geometry>
+                        <material>
+                            <script>
+                                <uri>file://media/materials/scripts/gazebo.material</uri>
+                                <name>Gazebo/Green</name>
+                            </script>
+                        </material>
+                        <pose>-0.1 0 0 0 0 0</pose>
+                    </visual>
+                    <pose>-0.1 0 0 0 0 0</pose>
+                </link>
+                <link name="ramp">
+                    <collision name="collision">
+                        <geometry>
+                            <box>
+                                <size>2 4 0.5</size>
+                            </box>
+                        </geometry>
+                        <pose>0.7 0 -0.1 0 -0.08 0</pose>
+                    </collision>
+                    <visual name="visual">
+                        <geometry>
+                            <box>
+                                <size>2 4 0.5</size>
+                            </box>
+                        </geometry>
+                        <material>
+                            <script>
+                                <uri>file://media/materials/scripts/gazebo.material</uri>
+                                <name>Gazebo/Green</name>
+                            </script>
+                        </material>
+                        <pose>0.7 0 -0.1 0 -0.08 0</pose>
+                    </visual>
+                    <pose>0.7 0 -0.1 0 -0.08 0</pose> <!-- Rotation for ramp angle -->
+                </link>
+                <link name="platform">
+                      <collision name="collision">
+                        <geometry>
+                          <box>
+                            <size>4 4 0.5</size>
+                          </box>
+                        </geometry>
+                        <pose>2.15 0 0 0 0 0</pose>
+                      </collision>
+                      <visual name="visual">
+                        <geometry>
+                          <box>
+                            <size>4 4 0.5</size>
+                          </box>
+                        </geometry>
+                        <material>
+                          <script>
+                            <uri>file://media/materials/scripts/gazebo.material</uri>
+                            <name>Gazebo/Green</name>
+                          </script>
+                        </material>
+                        <pose>2.15 0 0 0 0 0</pose>
+                      </visual>
+                      <pose>2.15 0 0 0 0 0</pose>
+                    </link>
+            </model>
+
+    </world>
+</sdf>

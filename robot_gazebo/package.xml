@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<package format="2">
+    <name>robot_gazebo</name>
+    <version>0.0.0</version>
+    <description>The robot_gazebo packages.</description>
+    <maintainer email="liusiyang.cn@gmail.com">Liu siyang</maintainer>
+    <license>BSD</license>
+
+    <!-- buildtool_depend: dependencies of the build process -->
+    <buildtool_depend>catkin</buildtool_depend>
+    <!-- depend: build, export, and execution dependency -->
+    <depend>roscpp</depend>
+    <depend>robot_common</depend>
+    <depend>gazebo_dev</depend>
+    <depend>gazebo_ros_control</depend>
+    <depend>gazebo_ros</depend>
+
+    <export>
+        <gazebo_ros_control plugin="${prefix}/robot_hw_sim_plugins.xml"/>
+        <gazebo_ros gazebo_model_path="${prefix}"/>
+    </export>
+</package>

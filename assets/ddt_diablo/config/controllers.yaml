@@ -1,0 +1,19 @@
+controllers:
+  joint_state_controller:
+    type: joint_state_controller/JointStateController
+    publish_rate: 100
+  robot_state_controller:
+    type: robot_state_controller/RobotStateController
+    publish_rate: 100
+
+  wheeled_bipedal_rl_controller:
+    type: rl_controller/WheeledBipedalRLController
+    default_length: 0.18
+    gains:
+      left_hip_joint: { p: 20, i: 0.0, d: 0.3, i_clamp_max: 0., i_clamp_min: 0., antiwindup: true, publish_state: true }
+      left_knee_joint: { p: 20, i: 0.0, d: 0.3, i_clamp_max: 0., i_clamp_min: 0., antiwindup: true, publish_state: true }
+      left_wheel_joint: { p: 0.6, i: 0.0, d: 0, i_clamp_max: 0., i_clamp_min: 0., antiwindup: true, publish_state: true }
+      right_hip_joint: { p: 20, i: 0.0, d: 0.3, i_clamp_max: 0., i_clamp_min: 0, antiwindup: true, publish_state: true }
+      right_knee_joint: { p: 20, i: 0., d: 0.3, i_clamp_max: 0., i_clamp_min: 0, antiwindup: true, publish_state: true }
+      right_wheel_joint: { p: 0.6, i: 0., d: 0.0, i_clamp_max: 0., i_clamp_min: 0., antiwindup: true, publish_state: true }
+

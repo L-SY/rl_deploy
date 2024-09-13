@@ -1,0 +1,8 @@
+<launch>
+    <!-- Launch the node -->
+    <node pkg="rl_sdk" type="rl_interface" name="rl_interface" output="screen" ns="rl_interface">
+        <param name="frequency" value="10"/>
+        <param name="robot_name" value="diablo"/>
+        <param name="rl_path" value="/home/lsy/rl_ws/src/assets/diablo/models"/>
+    </node>
+</launch>
