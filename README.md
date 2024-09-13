@@ -12,6 +12,15 @@
 
 #### Install
 
+- code
+```python
+cd ~
+mkdir rl_ws
+cd rl_ws 
+git clone git@github.com:L-SY/rl_deploy.git -b whole_ws  ~rl_ws/src
+cd src
+catkin build
+```
 - ros_control
 
 ```python
