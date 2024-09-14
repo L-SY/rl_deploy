@@ -7,7 +7,7 @@
 namespace vmc
 {
 SerialVMC::SerialVMC(double l1, double l2)
-  : centre_offset_(0), l1_(l1), l2_(l2), r_(0), theta_(0), dr_(0), dtheta_(0), Fr_(0), Ftheta_(0)
+  : BaseVMC(l1, l2), centre_offset_(0), r_(0), theta_(0), dr_(0), dtheta_(0), Fr_(0), Ftheta_(0)
 {
   if (l1 <= 0 || l2 <= 0)
   {
@@ -15,6 +15,7 @@ SerialVMC::SerialVMC(double l1, double l2)
   }
   std::cout << "l1 =  " << l1 << ", l2 =  " << l2 << std::endl;
 }
+
 
 void SerialVMC::calculateVLEPos(double phi1, double phi2)
 {
