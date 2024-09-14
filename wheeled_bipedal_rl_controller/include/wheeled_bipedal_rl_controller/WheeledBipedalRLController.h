@@ -29,6 +29,10 @@
 #include "rl_msgs/RobotState.h"
 #include "std_msgs/Float64MultiArray.h"
 
+// vmc
+#include "vmc/ParallelVMC.h"
+#include "vmc/SerialVMC.h"
+
 namespace rl_controller
 {
 class WheeledBipedalRLController
@@ -83,6 +87,10 @@ private:
   ros::Publisher robotStatePub_;
   ros::Subscriber rlCommandSub_;
   realtime_tools::RealtimeBuffer<std_msgs::Float64MultiArray> rlCmdRtBuffer_{};
+
+  // vmc
+  std::shared_ptr<vmc::SerialVMC> serialVMCPtr_;
+//  std::shared_ptr<vmc::Parallel> ParallelVMCPtr_;
 };
 
 }  // namespace rl_controller

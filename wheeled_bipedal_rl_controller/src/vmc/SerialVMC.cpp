@@ -7,7 +7,7 @@
 namespace vmc
 {
 SerialVMC::SerialVMC(double l1, double l2)
-  : l1_(l1), l2_(l2), r_(0), theta_(0), dr_(0), dtheta_(0), Fr_(0), Ftheta_(0)
+  : centre_offset_(0), l1_(l1), l2_(l2), r_(0), theta_(0), dr_(0), dtheta_(0), Fr_(0), Ftheta_(0)
 {
   if (l1 <= 0 || l2 <= 0)
   {
@@ -143,6 +143,10 @@ std::vector<double> SerialVMC::getDesJointEff(double phi1, double phi2, double f
   return {tau1, tau2};
 }
 
+//  If use ros_control do like this:
+//  SerialVMC_->update(
+//      jointHandles_[x].getPosition(),jointHandles_[x].getVelocity(), jointHandles_[x].getEffort(),
+//      jointHandles_[y].getPosition(), jointHandles_[y].getVelocity(), jointHandles_[y].getEffort());
 void SerialVMC::update(double phi1, double dphi1, double tau1, double phi2, double dphi2, double tau2)
 {
   phi1_ = phi1;

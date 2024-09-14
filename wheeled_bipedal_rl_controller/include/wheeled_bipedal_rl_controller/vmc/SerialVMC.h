@@ -39,6 +39,7 @@ public:
   void verifyInverse(const std::vector<std::vector<double>>& jacobian, const std::vector<std::vector<double>>& inverse);
 
 public:
+  double centre_offset_;
   double l1_, l2_;
   double phi1_, phi2_;
 
