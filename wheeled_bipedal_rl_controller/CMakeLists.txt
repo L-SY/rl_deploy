@@ -52,12 +52,22 @@ include_directories(
 
 )
 
-## Declare cpp executables
+add_library(vmc
+        src/vmc/ParallelVMC.cpp
+        src/vmc/SerialVMC.cpp
+)
+
+target_link_libraries(vmc
+        ${catkin_LIBRARIES}
+        ${TORCH_LIBRARIES}
+)
+
 add_library(${PROJECT_NAME}
         src/WheeledBipedalRLController.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}
+        vmc
         ${catkin_LIBRARIES}
         ${TORCH_LIBRARIES}
 )
