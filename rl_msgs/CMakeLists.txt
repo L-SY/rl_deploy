@@ -17,6 +17,7 @@ add_service_files(
 add_message_files(
         FILES
         RobotState.msg
+        VMC.msg
 )
 #
 #add_action_files(
