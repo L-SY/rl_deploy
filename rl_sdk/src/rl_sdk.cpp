@@ -36,6 +36,10 @@ torch::Tensor rl_sdk::ComputeObservation()
         {
             obs_list.push_back(obs.commands * params.commands_scale);
         }
+        else if(observation == "vmc")
+        {
+          obs_list.push_back(obs.commands * params.commands_scale);
+        }
         else if(observation == "dof_pos")
         {
             obs_list.push_back((obs.dof_pos - params.default_dof_pos) * params.dof_pos_scale);
@@ -63,6 +67,7 @@ void rl_sdk::InitObservations()
     obs.gravity_vec = torch::tensor({{0.0, 0.0, -1.0}});
     obs.commands = torch::tensor({{0.0, 0.0, 0.18}});
     obs.base_quat = torch::tensor({{0.0, 0.0, 0.0, 1.0}});
+    obs.vmc = torch::zeros({1, params.num_of_dofs});
     obs.dof_pos = params.default_dof_pos;
     obs.dof_vel = torch::zeros({1, params.num_of_dofs});
     obs.actions = torch::zeros({1, params.num_of_dofs});
@@ -222,6 +227,7 @@ void rl_sdk::ReadYaml(const std::string config_path)
     int rows = config["rows"].as<int>();
     int cols = config["cols"].as<int>();
     params.use_history = config["use_history"].as<bool>();
+    params.use_vmc = config["use_vmc"].as<bool>();
     params.dt = config["dt"].as<double>();
     params.decimation = config["decimation"].as<int>();
     params.num_observations = config["num_observations"].as<int>();
@@ -245,6 +251,18 @@ void rl_sdk::ReadYaml(const std::string config_path)
     params.ang_vel_scale = config["ang_vel_scale"].as<double>();
     params.dof_pos_scale = config["dof_pos_scale"].as<double>();
     params.dof_vel_scale = config["dof_vel_scale"].as<double>();
+
+//  For vmc
+    params.num_of_vmc = config["num_of_vmc"].as<int>();
+    params.l_scale = config["l_scale"].as<double>();
+    params.l_dot_scale = config["l_dot_scale"].as<double>();
+    params.theta_scale = config["theta_scale"].as<double>();
+    params.theta_dot_scale = config["theta_dot_scale"].as<double>();
+    params.l_offset = config["l_offset"].as<double>();
+    params.action_scale_l = config["action_scale_l"].as<double>();
+    params.action_scale_theta = config["action_scale_theta"].as<double>();
+    params.action_scale_vel = config["action_scale_vel"].as<double>();
+
 //    params.commands_scale = torch::tensor(ReadVectorFromYaml<double>(config["commands_scale"])).view({1, -1});
 //    params.commands_scale = torch::tensor({params.lin_vel_scale, params.lin_vel_scale, params.ang_vel_scale});
     params.commands_scale = torch::tensor({params.lin_vel_scale, params.ang_vel_scale, 5.0});
@@ -278,6 +296,7 @@ void rl_sdk::SetObservation()
   obs.ang_vel = torch::tensor(robot_state.imu.gyroscope).unsqueeze(0);
   obs.commands = torch::tensor({{control.vel_x, control.vel_yaw, control.pos_z}});
   obs.base_quat = torch::tensor(robot_state.imu.quaternion).unsqueeze(0);
+  obs.vmc = torch::tensor(robot_state.vmc.al).narrow(0, 0, params.num_of_vmc).unsqueeze(0);
   obs.dof_pos = torch::tensor(robot_state.motor_state.q).narrow(0, 0, params.num_of_dofs).unsqueeze(0);
   obs.dof_vel = torch::tensor(robot_state.motor_state.dq).narrow(0, 0, params.num_of_dofs).unsqueeze(0);
 }

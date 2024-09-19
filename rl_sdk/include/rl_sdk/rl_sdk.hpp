@@ -36,6 +36,11 @@ struct RobotState
         std::vector<T> tauEst = std::vector<T>(32, 0.0);
         std::vector<T> cur = std::vector<T>(32, 0.0);
     } motor_state;
+
+    struct VMC
+    {
+      std::vector<T> al = {0.0, 0.0, 0.0, 0.0}; // left_l, right_l, left_theta, right_theta
+    } vmc;
 };
 
 struct Control
@@ -69,7 +74,18 @@ struct ModelParams
     torch::Tensor torque_limits;
     torch::Tensor commands_scale;
     torch::Tensor default_dof_pos;
-    std::vector<std::string> joint_controller_names;
+
+    //  For vmc
+    bool use_vmc;
+    int num_of_vmc;
+    double l_scale;
+    double l_dot_scale;
+    double theta_scale;
+    double theta_dot_scale;
+    double l_offset;
+    double action_scale_l;
+    double action_scale_theta;
+    double action_scale_vel;
 };
 
 struct Observations
@@ -78,7 +94,8 @@ struct Observations
     torch::Tensor ang_vel;      
     torch::Tensor gravity_vec;      
     torch::Tensor commands;        
-    torch::Tensor base_quat;   
+    torch::Tensor base_quat;
+    torch::Tensor vmc;
     torch::Tensor dof_pos;           
     torch::Tensor dof_vel;           
     torch::Tensor actions;
