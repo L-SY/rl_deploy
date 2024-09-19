@@ -13,50 +13,56 @@ clamped_actions;
 }
 */
 
-torch::Tensor rl_sdk::ComputeObservation()
-{
-    std::vector<torch::Tensor> obs_list;
+torch::Tensor rl_sdk::ComputeObservation() {
+  std::vector<torch::Tensor> obs_list;
 
-    for(const std::string& observation : params.observations)
-    {
-        if(observation == "lin_vel")
-        {
-            obs_list.push_back(obs.lin_vel * params.lin_vel_scale);
-        }
-        else if(observation == "ang_vel")
-        {
-             obs_list.push_back(obs.ang_vel * params.ang_vel_scale); // TODO is QuatRotateInverse necessery?
-//            obs_list.push_back(QuatRotateInverse(obs.base_quat, obs.ang_vel, params.framework) * params.ang_vel_scale);
-        }
-        else if(observation == "gravity_vec")
-        {
-            obs_list.push_back(QuatRotateInverse(obs.base_quat, obs.gravity_vec, params.framework));
-        }
-        else if(observation == "commands")
-        {
-            obs_list.push_back(obs.commands * params.commands_scale);
-        }
-        else if(observation == "vmc")
-        {
-          obs_list.push_back(obs.commands * params.commands_scale);
-        }
-        else if(observation == "dof_pos")
-        {
-            obs_list.push_back((obs.dof_pos - params.default_dof_pos) * params.dof_pos_scale);
-        }
-        else if(observation == "dof_vel")
-        {
-            obs_list.push_back(obs.dof_vel * params.dof_vel_scale);
-        }
-        else if(observation == "actions")
-        {
-            obs_list.push_back(obs.actions);
-        }
+  for (const std::string &observation : params.observations) {
+    if (observation == "lin_vel") {
+      obs_list.push_back(obs.lin_vel * params.lin_vel_scale);
+    } else if (observation == "ang_vel") {
+      obs_list.push_back(
+          obs.ang_vel *
+          params.ang_vel_scale); // TODO is QuatRotateInverse necessery?
+      //            obs_list.push_back(QuatRotateInverse(obs.base_quat, obs.ang_vel, params.framework) * params.ang_vel_scale);
+    } else if (observation == "gravity_vec") {
+      obs_list.push_back(
+          QuatRotateInverse(obs.base_quat, obs.gravity_vec, params.framework));
+    } else if (observation == "commands") {
+      obs_list.push_back(obs.commands * params.commands_scale);
+    } else if (observation == "actions") {
+      obs_list.push_back(obs.actions);
     }
 
-    torch::Tensor obs = torch::cat(obs_list, 1);
-    torch::Tensor clamped_obs = torch::clamp(obs, -params.clip_obs, params.clip_obs);
-    return clamped_obs;
+    if (params.use_vmc) {
+      if (observation == "vmc") {
+        obs.vmc[0][0] *= params.l_scale;
+        obs.vmc[0][1] *= params.l_dot_scale;
+        obs.vmc[0][2] *= params.theta_scale;
+        obs.vmc[0][3] *= params.theta_dot_scale;
+        obs.vmc[0][4] *= params.l_scale;
+        obs.vmc[0][5] *= params.l_dot_scale;
+        obs.vmc[0][6] *= params.theta_scale;
+        obs.vmc[0][7] *= params.theta_dot_scale;
+        obs_list.push_back(obs.vmc);
+      } else if (observation == "wheel") {
+        obs_list.push_back(obs.dof_pos[0][2] * params.dof_pos_scale);
+        obs_list.push_back(obs.dof_pos[0][5] * params.dof_pos_scale);
+        obs_list.push_back(obs.dof_vel[0][2] * params.dof_vel_scale);
+        obs_list.push_back(obs.dof_vel[0][5] * params.dof_vel_scale);
+      } else {
+        if (observation == "dof_pos") {
+          obs_list.push_back((obs.dof_pos - params.default_dof_pos) *
+                             params.dof_pos_scale);
+        } else if (observation == "dof_vel") {
+          obs_list.push_back(obs.dof_vel * params.dof_vel_scale);
+        }
+      }
+    }
+  }
+  torch::Tensor obs = torch::cat(obs_list, 1);
+  torch::Tensor clamped_obs =
+      torch::clamp(obs, -params.clip_obs, params.clip_obs);
+  return clamped_obs;
 }
 
 void rl_sdk::InitObservations()
@@ -296,7 +302,10 @@ void rl_sdk::SetObservation()
   obs.ang_vel = torch::tensor(robot_state.imu.gyroscope).unsqueeze(0);
   obs.commands = torch::tensor({{control.vel_x, control.vel_yaw, control.pos_z}});
   obs.base_quat = torch::tensor(robot_state.imu.quaternion).unsqueeze(0);
-  obs.vmc = torch::tensor(robot_state.vmc.al).narrow(0, 0, params.num_of_vmc).unsqueeze(0);
   obs.dof_pos = torch::tensor(robot_state.motor_state.q).narrow(0, 0, params.num_of_dofs).unsqueeze(0);
   obs.dof_vel = torch::tensor(robot_state.motor_state.dq).narrow(0, 0, params.num_of_dofs).unsqueeze(0);
+
+  auto left_vmc = torch::tensor(robot_state.vmc.left).narrow(0, 0, params.num_of_vmc/2).unsqueeze(0);
+  auto right_vmc = torch::tensor(robot_state.vmc.right).narrow(0, 0, params.num_of_vmc/2).unsqueeze(0);
+  obs.vmc = torch::cat({left_vmc, right_vmc}, 1);
 }

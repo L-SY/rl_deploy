@@ -76,7 +76,6 @@ private:
   {
     if(params.framework == "isaacgym")
     {
-
       robot_state.imu.quaternion[3] = msg.imu_states.orientation.w;
       robot_state.imu.quaternion[0] = msg.imu_states.orientation.x;
       robot_state.imu.quaternion[1] = msg.imu_states.orientation.y;
@@ -99,6 +98,19 @@ private:
       robot_state.motor_state.q[i] = msg.joint_states.position[i];
       robot_state.motor_state.dq[i] = msg.joint_states.velocity[i];
       robot_state.motor_state.tauEst[i] = msg.joint_states.effort[i];
+    }
+
+    if (params.use_vmc)
+    {
+      // left_l, left_l_dot, left_theta, left_theta_dot
+      robot_state.vmc.left[0] = msg.left.l;
+      robot_state.vmc.left[1] = msg.left.l_dot;
+      robot_state.vmc.left[2] = msg.left.theta;
+      robot_state.vmc.left[3] = msg.left.theta_dot;
+      robot_state.vmc.right[0] = msg.right.l;
+      robot_state.vmc.right[1] = msg.right.l_dot;
+      robot_state.vmc.right[2] = msg.right.theta;
+      robot_state.vmc.right[3] = msg.right.theta_dot;
     }
 
     control.vel_x = msg.commands[0];
