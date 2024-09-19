@@ -55,7 +55,7 @@ public:
   void pubRLState();
   void initStateMsg();
 private:
-  void normal(const ros::Time& time, const ros::Duration& period);
+  void prostrate(const ros::Time& time, const ros::Duration& period);
   void rl(const ros::Time& time, const ros::Duration& period);
   void commandCB(const geometry_msgs::Twist& msg);
   void rlCommandCB(const std_msgs::Float64MultiArray& msg);
@@ -91,6 +91,10 @@ private:
   // vmc
   std::shared_ptr<vmc::SerialVMC> serialVMCPtr_;
 //  std::shared_ptr<vmc::Parallel> ParallelVMCPtr_;
+
+  // prostrate
+  double prostrateHip_;
+  double prostrateKnee_;
 };
 
 }  // namespace rl_controller

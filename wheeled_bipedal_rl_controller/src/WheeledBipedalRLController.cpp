@@ -52,6 +52,13 @@ bool WheeledBipedalRLController::init(hardware_interface::RobotHW* robot_hw, ros
   rlCommandSub_ = controller_nh.subscribe("/rl/command", 1, &WheeledBipedalRLController::rlCommandCB, this);
 
   controller_nh.param("default_length", default_length_, 0.18);
+
+  // prostrate
+  ros::NodeHandle prostrate_nh(controller_nh, "prostrate");
+  prostrate_nh.param("hip", prostrateHip_, 0.);
+  prostrate_nh.param("knee", prostrateKnee_, 0.);
+
+  // vmc
   geometry_msgs::Twist initTwist;
   initTwist.linear.x = 0.05;
   initTwist.linear.y = 0.0;
@@ -71,13 +78,28 @@ void WheeledBipedalRLController::starting(const ros::Time& /*unused*/)
 
 void WheeledBipedalRLController::update(const ros::Time& time, const ros::Duration& period)
 {
-  rl(time,period);
+//  rl(time,period);
+  prostrate(time,period);
   pubRLState();
 }
 
-void WheeledBipedalRLController::normal(const ros::Time& time, const ros::Duration& period)
+void WheeledBipedalRLController::prostrate (const ros::Time& time, const ros::Duration& period)
 {
-  ROS_INFO_STREAM("normal Mode");
+  auto rt_buffer = cmdRtBuffer_.readFromRT();
+
+  jointHandles_[0].setCommand(Pids_[0].computeCommand(prostrateHip_ - jointHandles_[0].getPosition(),period));
+  jointHandles_[1].setCommand(Pids_[1].computeCommand(prostrateKnee_ - jointHandles_[1].getPosition(),period));
+  jointHandles_[3].setCommand(Pids_[3].computeCommand(prostrateHip_ - jointHandles_[3].getPosition(),period));
+  jointHandles_[4].setCommand(Pids_[4].computeCommand(prostrateKnee_ - jointHandles_[4].getPosition(),period));
+  // wheel
+  double Vx = rt_buffer->linear.x;
+  double Vyaw = rt_buffer->angular.z;
+  double Vleft = Vx / 2 - Vyaw;
+  double Vright = Vx / 2 + Vyaw;
+  jointHandles_[2].setCommand(Pids_[2].computeCommand(Vleft-jointHandles_[2].getVelocity(),period));
+  jointHandles_[5].setCommand(Pids_[5].computeCommand(Vright-jointHandles_[5].getVelocity(),period));
+
+  ROS_INFO_STREAM("prostrate  Mode");
 }
 
 void WheeledBipedalRLController::rl(const ros::Time& time, const ros::Duration& period)
