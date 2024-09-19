@@ -6,14 +6,15 @@
 
 namespace vmc
 {
-SerialVMC::SerialVMC(double l1, double l2)
-  : BaseVMC(l1, l2), centre_offset_(0), r_(0), theta_(0), dr_(0), dtheta_(0), Fr_(0), Ftheta_(0)
+SerialVMC::SerialVMC(double l1, double l2, ros::NodeHandle nh)
+  : BaseVMC(l1, l2), nh_(nh), centre_offset_(0), r_(0), theta_(0), dr_(0), dtheta_(0), Fr_(0), Ftheta_(0)
 {
   if (l1 <= 0 || l2 <= 0)
   {
     throw std::invalid_argument("Lengths of the links must be positive.");
   }
   std::cout << "l1 =  " << l1 << ", l2 =  " << l2 << std::endl;
+  pub_ = nh_.advertise<std_msgs::Float64MultiArray>("vmc_info", 10);
 }
 
 
@@ -155,6 +156,16 @@ void SerialVMC::update(double phi1, double dphi1, double tau1, double phi2, doub
   calculateVLEPos(phi1,phi2);
   calculateVLEVel(phi1,dphi1,phi2,dphi2);
   calculateVLEEff(phi1,tau1,phi2,tau2);
+  std_msgs::Float64MultiArray vmcMsgs;
+  vmcMsgs.data.push_back(phi1_);
+  vmcMsgs.data.push_back(phi2_);
+  vmcMsgs.data.push_back(r_);
+  vmcMsgs.data.push_back(dr_);
+  vmcMsgs.data.push_back(theta_);
+  vmcMsgs.data.push_back(dtheta_);
+  vmcMsgs.data.push_back(Fr_);
+  vmcMsgs.data.push_back(Ftheta_);
+  pub_.publish(vmcMsgs);
 }
 
 void SerialVMC::verifyInverse(const std::vector<std::vector<double>>& jacobian, const std::vector<std::vector<double>>& inverse) {

@@ -9,12 +9,14 @@
 #include <iostream>
 #include <complex>
 #include "BaseVMC.h"
+#include "ros/ros.h"
+#include "std_msgs/Float64MultiArray.h"
 
 namespace vmc{
 
 class SerialVMC : public BaseVMC {
 public:
-  SerialVMC(double l1, double l2);
+  SerialVMC(double l1, double l2, ros::NodeHandle nh);
   ~SerialVMC() override = default;
 
   void update(double phi1, double dphi1, double tau1, double phi2, double dphi2,
@@ -41,6 +43,8 @@ public:
   void verifyInverse(const std::vector<std::vector<double>>& jacobian, const std::vector<std::vector<double>>& inverse) override;
 
 public:
+  ros::NodeHandle nh_;
+  ros::Publisher pub_;
   double centre_offset_;
   double phi1_, phi2_;
 
