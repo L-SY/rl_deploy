@@ -13,13 +13,6 @@ bool WheeledBipedalRLController::init(hardware_interface::RobotHW* robot_hw, ros
                                               ros::NodeHandle& controller_nh)
 {
   // Hardware interface
-  auto* effortJointInterface = robot_hw->get<hardware_interface::EffortJointInterface>();
-  jointHandles_.push_back(effortJointInterface->getHandle("left_hip_joint"));
-  jointHandles_.push_back(effortJointInterface->getHandle("left_knee_joint"));
-  jointHandles_.push_back(effortJointInterface->getHandle("left_wheel_joint"));
-  jointHandles_.push_back(effortJointInterface->getHandle("right_hip_joint"));
-  jointHandles_.push_back(effortJointInterface->getHandle("right_knee_joint"));
-  jointHandles_.push_back(effortJointInterface->getHandle("right_wheel_joint"));
   imuSensorHandle_ = robot_hw->get<hardware_interface::ImuSensorInterface>()->getHandle("base_imu");
   robotStateHandle_ = robot_hw->get<hardware_interface::RobotStateInterface>()->getHandle("robot_state");
 
@@ -30,22 +23,6 @@ bool WheeledBipedalRLController::init(hardware_interface::RobotHW* robot_hw, ros
   gazebo_unpause_physics_client_ = controller_nh.serviceClient<std_srvs::Empty>("/gazebo/unpause_physics");
 
   cmdSub_ = controller_nh.subscribe("command", 1, &WheeledBipedalRLController::commandCB, this);
-
-  // init
-  initStateMsg();
-
-  // Low-level-controller
-  Pids_.resize(jointHandles_.size());
-  for (size_t i = 0; i < jointHandles_.size(); ++i)
-  {
-    ros::NodeHandle joint_nh(controller_nh, std::string("gains/") + jointHandles_[i].getName());
-    Pids_[i].reset();
-    if (!Pids_[i].init(joint_nh))
-    {
-      ROS_WARN_STREAM("Failed to initialize PID gains from ROS parameter server.");
-      return false;
-    }
-  }
 
   // rl_interface
   robotStatePub_ = controller_nh.advertise<rl_msgs::RobotState>("/rl/robot_state", 10);
@@ -80,6 +57,7 @@ bool WheeledBipedalRLController::init(hardware_interface::RobotHW* robot_hw, ros
     leftSerialVMCPtr_ = std::make_shared<vmc::SerialVMC>(left_l1,left_l2);
     rightSerialVMCPtr_ = std::make_shared<vmc::SerialVMC>(right_l1,right_l2);
 
+    VMCPids_.resize(4);
     std::vector<std::string> VMCNames = {"left_r", "left_theta", "right_r", "right_theta"};
     for (size_t i = 0; i < 4; ++i)
     {
@@ -91,7 +69,41 @@ bool WheeledBipedalRLController::init(hardware_interface::RobotHW* robot_hw, ros
         return false;
       }
     }
+    auto* effortJointInterface = robot_hw->get<hardware_interface::EffortJointInterface>();
+    jointHandles_.push_back(effortJointInterface->getHandle("left_fake_hip_joint"));
+    jointHandles_.push_back(effortJointInterface->getHandle("left_hip_joint"));
+    jointHandles_.push_back(effortJointInterface->getHandle("left_wheel_joint"));
+    jointHandles_.push_back(effortJointInterface->getHandle("right_fake_hip_joint"));
+    jointHandles_.push_back(effortJointInterface->getHandle("right_hip_joint"));
+    jointHandles_.push_back(effortJointInterface->getHandle("right_wheel_joint"));
   }
+  else
+  {
+    auto* effortJointInterface = robot_hw->get<hardware_interface::EffortJointInterface>();
+    jointHandles_.push_back(effortJointInterface->getHandle("left_hip_joint"));
+    jointHandles_.push_back(effortJointInterface->getHandle("left_knee_joint"));
+    jointHandles_.push_back(effortJointInterface->getHandle("left_wheel_joint"));
+    jointHandles_.push_back(effortJointInterface->getHandle("right_hip_joint"));
+    jointHandles_.push_back(effortJointInterface->getHandle("right_knee_joint"));
+    jointHandles_.push_back(effortJointInterface->getHandle("right_wheel_joint"));
+  }
+
+  // Low-level-controller
+  Pids_.resize(jointHandles_.size());
+  for (size_t i = 0; i < jointHandles_.size(); ++i)
+  {
+    ros::NodeHandle joint_nh(controller_nh, std::string("gains/") + jointHandles_[i].getName());
+    Pids_[i].reset();
+    if (!Pids_[i].init(joint_nh))
+    {
+      ROS_WARN_STREAM("Failed to initialize PID gains from ROS parameter server.");
+      return false;
+    }
+  }
+  ROS_INFO_STREAM("Load lower-level controller right");
+
+  // init
+  initStateMsg();
 
   geometry_msgs::Twist initTwist;
   initTwist.linear.x = 0.05;
@@ -174,7 +186,6 @@ void WheeledBipedalRLController::pubRLState()
   robotStateMsg_.imu_states.linear_acceleration.x = imuSensorHandle_.getLinearAcceleration()[0];
   robotStateMsg_.imu_states.linear_acceleration.y = imuSensorHandle_.getLinearAcceleration()[1];
   robotStateMsg_.imu_states.linear_acceleration.z = imuSensorHandle_.getLinearAcceleration()[2];
-
   for(size_t i = 0; i < jointHandles_.size(); ++i)
   {
     robotStateMsg_.joint_states.name[i] = jointHandles_[i].getName();
@@ -182,7 +193,6 @@ void WheeledBipedalRLController::pubRLState()
     robotStateMsg_.joint_states.velocity[i] = jointHandles_[i].getVelocity();
     robotStateMsg_.joint_states.effort[i] = jointHandles_[i].getEffort();
   }
-
   auto cmdBuff = cmdRtBuffer_.readFromRT();
   double linear_x = cmdBuff->linear.x;
   double angular_z = cmdBuff->angular.z;
