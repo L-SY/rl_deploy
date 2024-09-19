@@ -80,6 +80,7 @@ private:
 
   // Low level controller
   std::vector<control_toolbox::Pid> Pids_;
+  std::vector<control_toolbox::Pid> VMCPids_;
   double default_length_;
 
   // rl_interface
@@ -89,7 +90,9 @@ private:
   realtime_tools::RealtimeBuffer<std_msgs::Float64MultiArray> rlCmdRtBuffer_{};
 
   // vmc
-  std::shared_ptr<vmc::SerialVMC> serialVMCPtr_;
+  bool useVMC_;
+  std::shared_ptr<vmc::SerialVMC> leftSerialVMCPtr_;
+  std::shared_ptr<vmc::SerialVMC> rightSerialVMCPtr_;
 //  std::shared_ptr<vmc::Parallel> ParallelVMCPtr_;
 
   // prostrate
