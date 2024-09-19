@@ -62,7 +62,8 @@ struct ModelParams
     std::vector<std::string> observations;
     double damping;
     double stiffness;
-    double action_scale;
+    double action_scale_pos;
+    double action_scale_vel;
     std::vector<int> hip_scale_reduction_indices;
     int num_of_dofs;
     double lin_vel_scale;
@@ -86,7 +87,6 @@ struct ModelParams
     double l_offset;
     double action_scale_l;
     double action_scale_theta;
-    double action_scale_vel;
 };
 
 struct Observations

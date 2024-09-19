@@ -94,10 +94,26 @@ void rl_sdk::InitControl()
 
 torch::Tensor rl_sdk::ComputeCommand(torch::Tensor actions)
 {
-    torch::Tensor actions_scaled = actions * params.action_scale;
-    torch::Tensor pos_torques = actions_scaled + params.default_dof_pos ;
-    output_command = pos_torques;
-    return output_command;
+  if (params.use_vmc)
+  {
+    actions[0][0] *= params.action_scale_theta;
+    actions[0][1] *= params.action_scale_l;
+    actions[0][2] *= params.action_scale_vel;
+    actions[0][3] *= params.action_scale_theta;
+    actions[0][4] *= params.action_scale_l;
+    actions[0][5] *= params.action_scale_vel;
+    output_command = actions;
+  }
+  else
+  {
+    torch::Tensor actions_scaled = actions * params.action_scale_pos;
+    double scale_factor = params.action_scale_vel / params.action_scale_pos;
+    actions_scaled[0][2] *= scale_factor;
+    actions_scaled[0][5] *= scale_factor;
+    torch::Tensor command = actions_scaled + params.default_dof_pos ;
+    output_command = command;
+  }
+  return output_command;
 }
 
 torch::Tensor rl_sdk::QuatRotateInverse(torch::Tensor q, torch::Tensor v, const std::string& framework)
@@ -249,9 +265,9 @@ void rl_sdk::ReadYaml(const std::string config_path)
         params.clip_actions_upper = torch::tensor(ReadVectorFromYaml<double>(config["clip_actions_upper"], params.framework, rows, cols)).view({1, -1});
         params.clip_actions_lower = torch::tensor(ReadVectorFromYaml<double>(config["clip_actions_lower"], params.framework, rows, cols)).view({1, -1});
     }
-    params.action_scale = config["action_scale"].as<double>();
-//    params.hip_scale_reduction = config["hip_scale_reduction"].as<double>();
-//    params.hip_scale_reduction_indices = ReadVectorFromYaml<int>(config["hip_scale_reduction_indices"]);
+    params.action_scale_pos = config["action_scale_pos"].as<double>();
+    params.action_scale_vel = config["action_scale_vel"].as<double>();
+
     params.num_of_dofs = config["num_of_dofs"].as<int>();
     params.lin_vel_scale = config["lin_vel_scale"].as<double>();
     params.ang_vel_scale = config["ang_vel_scale"].as<double>();
@@ -269,14 +285,9 @@ void rl_sdk::ReadYaml(const std::string config_path)
     params.action_scale_theta = config["action_scale_theta"].as<double>();
     params.action_scale_vel = config["action_scale_vel"].as<double>();
 
-//    params.commands_scale = torch::tensor(ReadVectorFromYaml<double>(config["commands_scale"])).view({1, -1});
-//    params.commands_scale = torch::tensor({params.lin_vel_scale, params.lin_vel_scale, params.ang_vel_scale});
     params.commands_scale = torch::tensor({params.lin_vel_scale, params.ang_vel_scale, 5.0});
-//    params.fixed_kp = torch::tensor(ReadVectorFromYaml<double>(config["fixed_kp"], params.framework, rows, cols)).view({1, -1});
-//    params.fixed_kd = torch::tensor(ReadVectorFromYaml<double>(config["fixed_kd"], params.framework, rows, cols)).view({1, -1});
     params.torque_limits = torch::tensor(ReadVectorFromYaml<double>(config["torque_limits"], params.framework, rows, cols)).view({1, -1});
     params.default_dof_pos = torch::tensor(ReadVectorFromYaml<double>(config["default_dof_pos"], params.framework, rows, cols)).view({1, -1});
-//    params.joint_controller_names = ReadVectorFromYaml<std::string>(config["joint_controller_names"], params.framework, rows, cols);
 }
 
 torch::Tensor rl_sdk::Forward()
