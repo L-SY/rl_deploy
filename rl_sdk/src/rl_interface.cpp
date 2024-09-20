@@ -102,15 +102,15 @@ private:
 
     if (params.use_vmc)
     {
-      // left_l, left_l_dot, left_theta, left_theta_dot
-      robot_state.vmc.left[0] = msg.left.l;
-      robot_state.vmc.left[1] = msg.left.l_dot;
-      robot_state.vmc.left[2] = msg.left.theta;
-      robot_state.vmc.left[3] = msg.left.theta_dot;
-      robot_state.vmc.right[0] = msg.right.l;
-      robot_state.vmc.right[1] = msg.right.l_dot;
-      robot_state.vmc.right[2] = msg.right.theta;
-      robot_state.vmc.right[3] = msg.right.theta_dot;
+      // left_theta, left_theta_dot , left_l, left_l_dot,
+      robot_state.vmc.left[0] = msg.left.theta;
+      robot_state.vmc.left[1] = msg.left.theta_dot;
+      robot_state.vmc.left[2] = msg.left.l;
+      robot_state.vmc.left[3] = msg.left.l_dot;
+      robot_state.vmc.right[0] = msg.right.theta;
+      robot_state.vmc.right[1] = msg.right.theta_dot;
+      robot_state.vmc.right[2] = msg.right.l;
+      robot_state.vmc.right[3] = msg.right.l_dot;
     }
 
     control.vel_x = msg.commands[0];
