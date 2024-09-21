@@ -25,7 +25,7 @@ bool WheeledBipedalRLController::init(hardware_interface::RobotHW* robot_hw, ros
   cmdSub_ = controller_nh.subscribe("command", 1, &WheeledBipedalRLController::commandCB, this);
 
   // rl_interface
-  robotStatePub_ = controller_nh.advertise<rl_msgs::RobotState>("/rl/robot_state", 10);
+  robotStatePub_ = controller_nh.advertise<rl_msgs::RobotState>("/rl/robot_state", 1);
   rlCommandSub_ = controller_nh.subscribe("/rl/command", 1, &WheeledBipedalRLController::rlCommandCB, this);
 
   controller_nh.param("default_length", default_length_, 0.18);
@@ -56,8 +56,8 @@ bool WheeledBipedalRLController::init(hardware_interface::RobotHW* robot_hw, ros
     vmc_nh.param("left_vmc/centre_offset", left_centre_offset, 0.0);
     vmc_nh.param("right_vmc/centre_offset", right_centre_offset, 0.0);
 
-    ros::NodeHandle vmc_left_nh(controller_nh, std::string("left"));
-    ros::NodeHandle vmc_right_nh(controller_nh, std::string("right"));
+    ros::NodeHandle vmc_left_nh(controller_nh, std::string("vmc_left"));
+    ros::NodeHandle vmc_right_nh(controller_nh, std::string("vmc_left"));
     leftSerialVMCPtr_ = std::make_shared<vmc::SerialVMC>(left_l1,left_l2, vmc_left_nh);
     rightSerialVMCPtr_ = std::make_shared<vmc::SerialVMC>(right_l1,right_l2, vmc_right_nh);
 
@@ -112,7 +112,7 @@ bool WheeledBipedalRLController::init(hardware_interface::RobotHW* robot_hw, ros
   geometry_msgs::Twist initTwist;
   initTwist.linear.x = 0.0;
   initTwist.linear.y = 0.0;
-  initTwist.linear.z = default_length_;
+  initTwist.linear.z = 0.0;
   initTwist.angular.x = 0.0;
   initTwist.angular.y = 0.0;
   initTwist.angular.z = 0.0;
@@ -198,23 +198,23 @@ void WheeledBipedalRLController::pubRLState()
     robotStateMsg_.joint_states.velocity[i] = jointHandles_[i].getVelocity();
     robotStateMsg_.joint_states.effort[i] = jointHandles_[i].getEffort();
   }
-//  auto cmdBuff = cmdRtBuffer_.readFromRT();
-//  double linear_x = cmdBuff->linear.x;
-//  double angular_z = cmdBuff->angular.z;
-//  double linear_z = cmdBuff->linear.z;
+  auto cmdBuff = cmdRtBuffer_.readFromRT();
+  double linear_x = cmdBuff->linear.x;
+  double angular_z = cmdBuff->angular.z;
+  double linear_z = cmdBuff->linear.z;
 
-//  if (linear_x != 0.0 || angular_z != 0.0 || linear_z != 0.0)
-//  {
-//    robotStateMsg_.commands[0] = linear_x;
-//    robotStateMsg_.commands[1] = angular_z;
-//    robotStateMsg_.commands[2] = default_length_ + linear_z;
-//  }
-//  else
-//  {
+  if (linear_x != 0.0 || angular_z != 0.0 || linear_z != 0.0)
+  {
+    robotStateMsg_.commands[0] = linear_x;
+    robotStateMsg_.commands[1] = angular_z;
+    robotStateMsg_.commands[2] = default_length_ + linear_z;
+  }
+  else
+  {
     robotStateMsg_.commands[0] = 0;
     robotStateMsg_.commands[1] = 0;
     robotStateMsg_.commands[2] = default_length_;
-//  }
+  }
 
   if (useVMC_)
   {
@@ -247,7 +247,7 @@ void WheeledBipedalRLController::setCommand(const ros::Duration& period)
   }
   else if (useVMC_)
   {
-    //  [left_theta, left_l, left_wheel_vel, right_theta, right_l, right_wheel_vel]
+    //  data: [left_theta, left_l, left_wheel_vel, right_theta, right_l, right_wheel_vel]
     double leftFR = VMCPids_[0].computeCommand(data[1] - leftSerialVMCPtr_->r_,period);
     double leftFTheta = VMCPids_[1].computeCommand(data[0] - leftSerialVMCPtr_->theta_,period);
     double rightFR = VMCPids_[2].computeCommand(data[4] - rightSerialVMCPtr_->r_,period);
@@ -308,11 +308,11 @@ void WheeledBipedalRLController::initStateMsg()
   robotStateMsg_.commands[2] = default_length_; // init_pos_z
   if (useVMC_)
   {
-    robotStateMsg_.left.l = 0.0;
+    robotStateMsg_.left.l = 0.05;
     robotStateMsg_.left.l_dot = 0.0;
     robotStateMsg_.left.theta = 0.0;
     robotStateMsg_.left.theta_dot = 0.0;
-    robotStateMsg_.right.l = 0.0;
+    robotStateMsg_.right.l = 0.05;
     robotStateMsg_.right.l_dot = 0.0;
     robotStateMsg_.right.theta = 0.0;
     robotStateMsg_.right.theta_dot = 0.0;

@@ -15,16 +15,16 @@ public:
   {
     // rl interface
     int frequency;
-    nh_.param("frequency", frequency, 10);
+    nh_.param("frequency", frequency, 100);
     robotStateSub_ = nh_.subscribe("/rl/robot_state", 1, &RLInterface::robotStateCB, this);
-    rlCommandPub_ = nh_.advertise<std_msgs::Float64MultiArray>("/rl/command", 10);
+    rlCommandPub_ = nh_.advertise<std_msgs::Float64MultiArray>("/rl/command", 1);
     loop_rate_ = new ros::Rate(frequency);
 
     // read params from yaml
     nh_.param<std::string>("robot_name", robot_name, "");
     std::string rl_path;
     nh_.param<std::string>("rl_path", rl_path, "");
-    std::string config_path = std::string(rl_path + "/config_vmc.yaml");
+    std::string config_path = std::string(rl_path + "/config.yaml");
     ReadYaml(config_path);
 
     // model
@@ -48,6 +48,7 @@ public:
 
   void update()
   {
+      SetObservation();
       obs.actions = Forward();
       torch::Tensor origin_output_command = ComputeCommand(obs.actions);
       output_command = torch::clamp(origin_output_command, params.clip_actions_lower, params.clip_actions_upper);
@@ -58,14 +59,12 @@ public:
 //      output_command[0][4] = 0.2;
 //      output_command[0][5] = 0;
       ROS_INFO_STREAM(output_command[0]);
-
+//      ROS_INFO_STREAM(obs.vmc);
       std_msgs::Float64MultiArray commandMsg;
       for (int i = 0; i < params.num_of_dofs; ++i) {
         commandMsg.data.push_back(output_command[0][i].item<double>());
       }
       rlCommandPub_.publish(commandMsg);
-
-      SetObservation();
   }
 
 private:
@@ -107,14 +106,14 @@ private:
     if (params.use_vmc)
     {
       // left_theta, left_theta_dot , left_l, left_l_dot,
-      robot_state.vmc.left[0] = msg.left.theta;
-      robot_state.vmc.left[1] = msg.left.theta_dot;
-      robot_state.vmc.left[2] = msg.left.l;
-      robot_state.vmc.left[3] = msg.left.l_dot;
-      robot_state.vmc.right[0] = msg.right.theta;
-      robot_state.vmc.right[1] = msg.right.theta_dot;
-      robot_state.vmc.right[2] = msg.right.l;
-      robot_state.vmc.right[3] = msg.right.l_dot;
+      robot_state.vmc.theta[0] = msg.left.theta;
+      robot_state.vmc.theta[1] = msg.right.theta;
+      robot_state.vmc.dtheta[0] = msg.left.theta_dot;
+      robot_state.vmc.dtheta[1] = msg.right.theta_dot;
+      robot_state.vmc.l[0] = msg.left.l;
+      robot_state.vmc.l[1] = msg.right.l;
+      robot_state.vmc.dl[0] = msg.left.l_dot;
+      robot_state.vmc.dl[1] = msg.right.l_dot;
     }
 
     control.vel_x = msg.commands[0];

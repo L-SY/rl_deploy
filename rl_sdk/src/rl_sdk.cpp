@@ -118,7 +118,10 @@ void rl_sdk::InitControl()
 {
   control.vel_x = 0.0;
   control.vel_yaw = 0.0;
-  control.pos_z = 0.0;
+  if (params.use_vmc)
+    control.pos_z = params.l_offset;
+  else
+    control.pos_z = 0;
 }
 
 torch::Tensor rl_sdk::ComputeCommand(torch::Tensor actions)
@@ -316,15 +319,18 @@ void rl_sdk::ReadYaml(const std::string config_path)
   params.dof_vel_scale = config["dof_vel_scale"].as<double>();
 
   //  For vmc
-  params.num_of_vmc = config["num_of_vmc"].as<int>();
-  params.l_scale = config["l_scale"].as<double>();
-  params.l_dot_scale = config["l_dot_scale"].as<double>();
-  params.theta_scale = config["theta_scale"].as<double>();
-  params.theta_dot_scale = config["theta_dot_scale"].as<double>();
-  params.l_offset = config["l_offset"].as<double>();
-  params.action_scale_l = config["action_scale_l"].as<double>();
-  params.action_scale_theta = config["action_scale_theta"].as<double>();
-  params.action_scale_vel = config["action_scale_vel"].as<double>();
+  if (params.use_vmc)
+  {
+    params.num_of_vmc = config["num_of_vmc"].as<int>();
+    params.l_scale = config["l_scale"].as<double>();
+    params.l_dot_scale = config["l_dot_scale"].as<double>();
+    params.theta_scale = config["theta_scale"].as<double>();
+    params.theta_dot_scale = config["theta_dot_scale"].as<double>();
+    params.l_offset = config["l_offset"].as<double>();
+    params.action_scale_l = config["action_scale_l"].as<double>();
+    params.action_scale_theta = config["action_scale_theta"].as<double>();
+    params.action_scale_vel = config["action_scale_vel"].as<double>();
+  }
 
 //  TODO： read from yaml
   params.commands_scale = torch::tensor({ params.lin_vel_scale, params.ang_vel_scale, 5.0 });
@@ -354,16 +360,10 @@ void rl_sdk::SetObservation()
   obs.dof_vel = torch::tensor(robot_state.motor_state.dq).narrow(0, 0, params.num_of_dofs).unsqueeze(0);
 
   //  [theta , theta_dot, l, l_dot]
-  auto left_vmc = torch::tensor(robot_state.vmc.left).narrow(0, 0, params.num_of_vmc / 2).unsqueeze(0);
-  auto right_vmc = torch::tensor(robot_state.vmc.right).narrow(0, 0, params.num_of_vmc / 2).unsqueeze(0);
+  auto theta_tensor = torch::tensor(robot_state.vmc.theta).narrow(0, 0, params.num_of_vmc / 4).unsqueeze(0);
+  auto dtheta_tensor = torch::tensor(robot_state.vmc.dtheta).narrow(0, 0, params.num_of_vmc / 4).unsqueeze(0);
+  auto l_tensor = torch::tensor(robot_state.vmc.l).narrow(0, 0, params.num_of_vmc / 4).unsqueeze(0);
+  auto dl_tensor = torch::tensor(robot_state.vmc.dl).narrow(0, 0, params.num_of_vmc / 4).unsqueeze(0);
 
-  torch::Tensor interleaved_vmc = torch::empty({ 1, params.num_of_vmc });
-
-  for (int i = 0; i < params.num_of_vmc / 2; ++i)
-  {
-    interleaved_vmc[0][2 * i] = left_vmc[0][i];
-    interleaved_vmc[0][2 * i + 1] = right_vmc[0][i];
-  }
-
-  obs.vmc = interleaved_vmc;
+  obs.vmc = torch::cat({theta_tensor, dtheta_tensor, l_tensor, dl_tensor}, 0).view({1, -1});
 }

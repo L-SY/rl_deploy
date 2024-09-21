@@ -155,19 +155,19 @@ void SerialVMC::update(double phi1, double dphi1, double tau1, double phi2, doub
   phi2_ = phi2;
   calculateVLEPos(phi1,phi2);
   calculateVLEVel(phi1,dphi1,phi2,dphi2);
-  calculateVLEEff(phi1,tau1,phi2,tau2);
-  std_msgs::Float64MultiArray vmcMsgs;
-  vmcMsgs.data.push_back(phi1_);
-  vmcMsgs.data.push_back(phi2_);
-  vmcMsgs.data.push_back(x_);
-  vmcMsgs.data.push_back(y_);
-  vmcMsgs.data.push_back(r_);
-  vmcMsgs.data.push_back(dr_);
-  vmcMsgs.data.push_back(theta_);
-  vmcMsgs.data.push_back(dtheta_);
-  vmcMsgs.data.push_back(Fr_);
-  vmcMsgs.data.push_back(Ftheta_);
-  pub_.publish(vmcMsgs);
+//  calculateVLEEff(phi1,tau1,phi2,tau2);
+//  std_msgs::Float64MultiArray vmcMsgs;
+//  vmcMsgs.data.push_back(phi1_);
+//  vmcMsgs.data.push_back(phi2_);
+//  vmcMsgs.data.push_back(x_);
+//  vmcMsgs.data.push_back(y_);
+//  vmcMsgs.data.push_back(r_);
+//  vmcMsgs.data.push_back(dr_);
+//  vmcMsgs.data.push_back(theta_);
+//  vmcMsgs.data.push_back(dtheta_);
+//  vmcMsgs.data.push_back(Fr_);
+//  vmcMsgs.data.push_back(Ftheta_);
+//  pub_.publish(vmcMsgs);
 }
 
 void SerialVMC::verifyInverse(const std::vector<std::vector<double>>& jacobian, const std::vector<std::vector<double>>& inverse) {

@@ -39,8 +39,10 @@ struct RobotState
 
     struct VMC
     {
-      std::vector<T> left = {0.0, 0.0, 0.0, 0.0}; // left_theta, left_theta_dot , left_l, left_l_dot,
-      std::vector<T> right = {0.0, 0.0, 0.0, 0.0};
+      std::vector<T> theta = {0.0, 0.0};
+      std::vector<T> dtheta = {0.0, 0.0};
+      std::vector<T> l = {0.0, 0.0};
+      std::vector<T> dl = {0.0, 0.0};
     } vmc;
 };
 
