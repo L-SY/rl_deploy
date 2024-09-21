@@ -129,16 +129,18 @@ torch::Tensor rl_sdk::ComputeCommand(torch::Tensor actions)
   if (params.use_vmc)
   {
     // TODO: should change the order to l-theta
-    actions[0][0] *= params.action_scale_theta;
-    actions[0][1] *= params.action_scale_l;
-    actions[0][1] += params.l_offset;
-    actions[0][2] *= params.action_scale_vel;
-    actions[0][3] *= params.action_scale_theta;
-    actions[0][4] *= params.action_scale_l;
-    actions[0][4] += params.l_offset;
-    actions[0][5] *= params.action_scale_vel;
+    torch::Tensor scaled_action = torch::zeros({ 1, 6 });;
 
-    output_command = actions;
+    scaled_action[0][0] = actions[0][0] * params.action_scale_theta;
+    scaled_action[0][1] = actions[0][1] * params.action_scale_l;
+    scaled_action[0][1] += params.l_offset;
+    scaled_action[0][2] = actions[0][2] * params.action_scale_vel;
+    scaled_action[0][3] = actions[0][3] * params.action_scale_theta;
+    scaled_action[0][4] = actions[0][4] * params.action_scale_l;
+    scaled_action[0][4] += params.l_offset;
+    scaled_action[0][5] = actions[0][5] * params.action_scale_vel;
+
+    output_command = scaled_action;
   }
   else
   {
