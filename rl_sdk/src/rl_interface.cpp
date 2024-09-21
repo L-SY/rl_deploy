@@ -48,11 +48,15 @@ public:
 
   void update()
   {
-      torch::Tensor clamped_actions = Forward();
-      obs.actions = clamped_actions;
+      obs.actions = Forward();
       torch::Tensor origin_output_command = ComputeCommand(obs.actions);
-
-      output_command = torch::clamp(origin_output_command, -(params.torque_limits), params.torque_limits);
+      output_command = torch::clamp(origin_output_command, params.clip_actions_lower, params.clip_actions_upper);
+//      output_command[0][0] = -1.3;
+//      output_command[0][1] = 0.2;
+//      output_command[0][2] = 0;
+//      output_command[0][3] = -1.3;
+//      output_command[0][4] = 0.2;
+//      output_command[0][5] = 0;
       ROS_INFO_STREAM(output_command[0]);
 
       std_msgs::Float64MultiArray commandMsg;

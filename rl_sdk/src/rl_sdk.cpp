@@ -100,7 +100,7 @@ void rl_sdk::InitObservations()
   obs.ang_vel = torch::tensor({ { 0.0, 0.0, 0.0 } });
   // No need change to -9.81
   obs.gravity_vec = torch::tensor({ { 0.0, 0.0, -1.0 } });
-  obs.commands = torch::tensor({ { 0.0, 0.0, 0.18 } });
+  obs.commands = torch::tensor({ { 0.0, 0.0, 0.0 } });
   obs.base_quat = torch::tensor({ { 0.0, 0.0, 0.0, 1.0 } });
   obs.vmc = torch::zeros({ 1, params.num_of_vmc });
   obs.dof_pos = params.default_dof_pos;
@@ -134,6 +134,7 @@ torch::Tensor rl_sdk::ComputeCommand(torch::Tensor actions)
     actions[0][4] *= params.action_scale_l;
     actions[0][4] += params.l_offset;
     actions[0][5] *= params.action_scale_vel;
+
     output_command = actions;
   }
   else
@@ -143,6 +144,7 @@ torch::Tensor rl_sdk::ComputeCommand(torch::Tensor actions)
     actions_scaled[0][2] *= scale_factor;
     actions_scaled[0][5] *= scale_factor;
     torch::Tensor command = actions_scaled + params.default_dof_pos;
+
     output_command = command;
   }
   return output_command;
@@ -340,14 +342,7 @@ torch::Tensor rl_sdk::Forward()
   torch::Tensor actions;
   actions = model.forward({ clamped_obs }).toTensor();
 
-  if (params.clip_actions_upper.numel() != 0 && params.clip_actions_lower.numel() != 0)
-  {
-    return torch::clamp(actions, params.clip_actions_lower, params.clip_actions_upper);
-  }
-  else
-  {
-    return actions;
-  }
+  return actions;
 }
 
 void rl_sdk::SetObservation()

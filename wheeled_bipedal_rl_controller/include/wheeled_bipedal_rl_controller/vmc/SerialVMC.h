@@ -47,7 +47,7 @@ public:
   ros::Publisher pub_;
   double centre_offset_;
   double phi1_, phi2_;
-
+  double x_, y_;
   double r_, theta_;
   double dr_, dtheta_;
   double Fr_, Ftheta_;

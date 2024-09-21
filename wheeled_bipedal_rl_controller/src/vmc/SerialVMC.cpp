@@ -20,21 +20,21 @@ SerialVMC::SerialVMC(double l1, double l2, ros::NodeHandle nh)
 
 void SerialVMC::calculateVLEPos(double phi1, double phi2)
 {
-  double x = l1_ * sin(phi1) + l2_ * sin(phi1 + phi2);
-  double y = l1_ * cos(phi1) + l2_ * cos(phi1 + phi2);
-  r_ = std::sqrt(x * x + y * y);
-  theta_ = (std::atan2(y, x)) - M_PI_2;
+  x_ = l1_ * cos(phi1) + l2_ * cos(phi1 + phi2);
+  y_ = l1_ * sin(phi1) + l2_ * sin(phi1 + phi2);
+  r_ = std::sqrt(x_ * x_ + y_ * y_);
+  theta_ = (std::atan2(y_, x_)) - M_PI_2;
 }
 
 std::vector<std::vector<double>> SerialVMC::calculateJacobian(double phi1, double phi2) {
-  double x = l1_ * sin(phi1) + l2_ * sin(phi1 + phi2);
-  double y = l1_ * cos(phi1) + l2_ * cos(phi1 + phi2);
+  double x = l1_ * cos(phi1) + l2_ * cos(phi1 + phi2);
+  double y = l1_ * sin(phi1) + l2_ * sin(phi1 + phi2);
   double r = std::sqrt(x * x + y * y);
 
-  double dx_dphi1 = l1_ * cos(phi1) + l2_ * cos(phi1 + phi2);
-  double dx_dphi2 = l2_ * cos(phi1 + phi2);
-  double dy_dphi1 = - l1_ * sin(phi1) - l2_ * sin(phi1 + phi2);
-  double dy_dphi2 = - l2_ * sin(phi1 + phi2);
+  double dx_dphi1 = -l1_ * sin(phi1) - l2_ * sin(phi1 + phi2);
+  double dx_dphi2 = -l2_ * sin(phi1 + phi2);
+  double dy_dphi1 =  l1_ * cos(phi1) + l2_ * cos(phi1 + phi2);
+  double dy_dphi2 =  l2_ * cos(phi1 + phi2);
 
   double dr_dphi1 = (dx_dphi1 * x + dy_dphi1 * y) / r;
   double dr_dphi2 = (dx_dphi2 * x + dy_dphi2 * y) / r;
@@ -159,6 +159,8 @@ void SerialVMC::update(double phi1, double dphi1, double tau1, double phi2, doub
   std_msgs::Float64MultiArray vmcMsgs;
   vmcMsgs.data.push_back(phi1_);
   vmcMsgs.data.push_back(phi2_);
+  vmcMsgs.data.push_back(x_);
+  vmcMsgs.data.push_back(y_);
   vmcMsgs.data.push_back(r_);
   vmcMsgs.data.push_back(dr_);
   vmcMsgs.data.push_back(theta_);
