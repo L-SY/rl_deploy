@@ -91,6 +91,7 @@ private:
 
   // vmc
   bool useVMC_;
+  double gravityFeedforward_;
   std::shared_ptr<vmc::SerialVMC> leftSerialVMCPtr_;
   std::shared_ptr<vmc::SerialVMC> rightSerialVMCPtr_;
 //  std::shared_ptr<vmc::Parallel> ParallelVMCPtr_;

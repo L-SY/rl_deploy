@@ -45,6 +45,8 @@ bool WheeledBipedalRLController::init(hardware_interface::RobotHW* robot_hw, ros
     double left_l1, left_l2, right_l1, right_l2;
     double left_centre_offset, right_centre_offset;
 
+    vmc_nh.param("gravity_feedforward", gravityFeedforward_, 50.0);
+
     vmc_nh.param("left_vmc/l1", left_l1, 0.14);
     vmc_nh.param("left_vmc/l2", left_l2, 0.14);
     vmc_nh.param("right_vmc/l1", right_l1, 0.14);
@@ -251,8 +253,8 @@ void WheeledBipedalRLController::setCommand(const ros::Duration& period)
     double rightFR = VMCPids_[2].computeCommand(data[4] - rightSerialVMCPtr_->r_,period);
     double rightFTheta = VMCPids_[3].computeCommand(data[3] - rightSerialVMCPtr_->theta_,period);
 
-    std::vector<double> leftJointCmd = leftSerialVMCPtr_->getDesJointEff(leftSerialVMCPtr_->phi1_,leftSerialVMCPtr_->phi2_,leftFR+ 50, leftFTheta );
-    std::vector<double> rightJointCmd = rightSerialVMCPtr_->getDesJointEff(rightSerialVMCPtr_->phi1_,rightSerialVMCPtr_->phi2_,rightFR+ 50, rightFTheta );
+    std::vector<double> leftJointCmd = leftSerialVMCPtr_->getDesJointEff(leftSerialVMCPtr_->phi1_,leftSerialVMCPtr_->phi2_,leftFR + gravityFeedforward_, leftFTheta );
+    std::vector<double> rightJointCmd = rightSerialVMCPtr_->getDesJointEff(rightSerialVMCPtr_->phi1_,rightSerialVMCPtr_->phi2_,rightFR + gravityFeedforward_, rightFTheta );
 //    std::vector<double> leftJointCmd = leftSerialVMCPtr_->getDesJointEff(leftSerialVMCPtr_->phi1_,leftSerialVMCPtr_->phi2_,leftFR, leftFTheta);
 //    std::vector<double> rightJointCmd = rightSerialVMCPtr_->getDesJointEff(rightSerialVMCPtr_->phi1_,rightSerialVMCPtr_->phi2_,rightFR, rightFTheta);
 
