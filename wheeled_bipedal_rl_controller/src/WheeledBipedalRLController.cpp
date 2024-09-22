@@ -74,16 +74,6 @@ bool WheeledBipedalRLController::init(hardware_interface::RobotHW* robot_hw, ros
       }
     }
     auto* effortJointInterface = robot_hw->get<hardware_interface::EffortJointInterface>();
-    jointHandles_.push_back(effortJointInterface->getHandle("left_fake_hip_joint"));
-    jointHandles_.push_back(effortJointInterface->getHandle("left_hip_joint"));
-    jointHandles_.push_back(effortJointInterface->getHandle("left_wheel_joint"));
-    jointHandles_.push_back(effortJointInterface->getHandle("right_fake_hip_joint"));
-    jointHandles_.push_back(effortJointInterface->getHandle("right_hip_joint"));
-    jointHandles_.push_back(effortJointInterface->getHandle("right_wheel_joint"));
-  }
-  else
-  {
-    auto* effortJointInterface = robot_hw->get<hardware_interface::EffortJointInterface>();
     jointHandles_.push_back(effortJointInterface->getHandle("left_hip_joint"));
     jointHandles_.push_back(effortJointInterface->getHandle("left_knee_joint"));
     jointHandles_.push_back(effortJointInterface->getHandle("left_wheel_joint"));
@@ -132,11 +122,11 @@ void WheeledBipedalRLController::update(const ros::Time& time, const ros::Durati
   {
       // change for diablo urdf
       leftSerialVMCPtr_->update(
-          M_PI + jointHandles_[0].getPosition() - 0.13433 ,jointHandles_[0].getVelocity(), jointHandles_[0].getEffort(),
-          jointHandles_[1].getPosition() - M_PI + 0.2687, jointHandles_[1].getVelocity(), jointHandles_[1].getEffort());
+          jointHandles_[0].getPosition() + 0.13433 ,jointHandles_[0].getVelocity(), jointHandles_[0].getEffort(),
+          jointHandles_[1].getPosition() + M_PI - 0.2687, jointHandles_[1].getVelocity(), jointHandles_[1].getEffort());
       rightSerialVMCPtr_->update(
-          M_PI + jointHandles_[3].getPosition() -0.13433,jointHandles_[3].getVelocity(), jointHandles_[3].getEffort(),
-          jointHandles_[4].getPosition() - M_PI + 0.2687, jointHandles_[4].getVelocity(), jointHandles_[4].getEffort());
+          jointHandles_[3].getPosition() + 0.13433,jointHandles_[3].getVelocity(), jointHandles_[3].getEffort(),
+          jointHandles_[4].getPosition() + M_PI - 0.2687, jointHandles_[4].getVelocity(), jointHandles_[4].getEffort());
   }
   rl(time,period);
 //  prostrate(time,period);
