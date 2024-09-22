@@ -95,7 +95,8 @@ struct Observations
 {
     torch::Tensor lin_vel;           
     torch::Tensor ang_vel;      
-    torch::Tensor gravity_vec;      
+    torch::Tensor gravity_vec;
+    torch::Tensor real_gravity_vec;
     torch::Tensor commands;        
     torch::Tensor base_quat;
     torch::Tensor vmc;

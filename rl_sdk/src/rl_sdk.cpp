@@ -31,7 +31,8 @@ torch::Tensor rl_sdk::ComputeObservation()
     }
     else if (observation == "gravity_vec")
     {
-      obs_list.push_back(QuatRotateInverse(obs.base_quat, obs.gravity_vec, params.framework));
+      obs.real_gravity_vec = QuatRotateInverse(obs.base_quat, obs.gravity_vec, params.framework);
+      obs_list.push_back(obs.real_gravity_vec);
     }
     else if (observation == "commands")
     {
@@ -99,7 +100,8 @@ void rl_sdk::InitObservations()
   obs.lin_vel = torch::tensor({ { 0.0, 0.0, 0.0 } });
   obs.ang_vel = torch::tensor({ { 0.0, 0.0, 0.0 } });
   // No need change to -9.81
-  obs.gravity_vec = torch::tensor({ { 0.0, 0.0, -1.0 } });
+  obs.gravity_vec = torch::tensor({ { 0.0, 0.0, -9.81 } });
+  obs.real_gravity_vec = obs.gravity_vec;
   obs.commands = torch::tensor({ { 0.0, 0.0, 0.0 } });
   obs.base_quat = torch::tensor({ { 0.0, 0.0, 0.0, 1.0 } });
   obs.vmc = torch::zeros({ 1, params.num_of_vmc });
