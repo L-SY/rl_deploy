@@ -18,6 +18,8 @@ add_message_files(
         FILES
         RobotState.msg
         VMC.msg
+        vmcAction.msg
+        vmcObs.msg
 )
 #
 #add_action_files(
