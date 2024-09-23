@@ -21,6 +21,7 @@ public:
     robotStateSub_ = nh_.subscribe("/rl/robot_state", 1, &RLInterface::robotStateCB, this);
     rlCommandPub_ = nh_.advertise<std_msgs::Float64MultiArray>("/rl/command", 1);
     vmcObsPub_ = nh_.advertise<rl_msgs::vmcObs>("/rl/vmc/obs", 1);
+    vmcRawObsPub_ = nh_.advertise<rl_msgs::vmcObs>("/rl/vmc/raw_obs", 1);
     vmcActionPub_ = nh_.advertise<rl_msgs::vmcAction>("/rl/vmc/action", 1);
     loop_rate_ = new ros::Rate(frequency);
 
@@ -28,7 +29,7 @@ public:
     nh_.param<std::string>("robot_name", robot_name, "");
     std::string rl_path;
     nh_.param<std::string>("rl_path", rl_path, "");
-    std::string config_path = std::string(rl_path + "/config_vmc.yaml");
+    std::string config_path = std::string(rl_path + "/config.yaml");
     ReadYaml(config_path);
 
     // model
@@ -64,17 +65,17 @@ public:
   void update()
   {
       SetObservation();
-      vmcObsMsg_.base_ang_vel[0] = obs.ang_vel[0][0].item<double>() * params.ang_vel_scale;
-      vmcObsMsg_.base_ang_vel[1] = obs.ang_vel[0][1].item<double>() * params.ang_vel_scale;
-      vmcObsMsg_.base_ang_vel[2] = obs.ang_vel[0][2].item<double>() * params.ang_vel_scale;
+      vmcObsMsg_.base_ang_vel[0] = obs.ang_vel[0][0].item<double>() ;
+      vmcObsMsg_.base_ang_vel[1] = obs.ang_vel[0][1].item<double>() ;
+      vmcObsMsg_.base_ang_vel[2] = obs.ang_vel[0][2].item<double>() ;
 
       vmcObsMsg_.projected_gravity[0] = obs.real_gravity_vec[0][0].item<double>();
       vmcObsMsg_.projected_gravity[1] = obs.real_gravity_vec[0][1].item<double>();
       vmcObsMsg_.projected_gravity[2] = obs.real_gravity_vec[0][2].item<double>();
 
-      vmcObsMsg_.commands[0] = obs.commands[0][0].item<double>() * params.commands_scale[0].item<double>();
-      vmcObsMsg_.commands[1] = obs.commands[0][1].item<double>() * params.commands_scale[1].item<double>();
-      vmcObsMsg_.commands[2] = obs.commands[0][2].item<double>() * params.commands_scale[2].item<double>();
+      vmcObsMsg_.commands[0] = obs.commands[0][0].item<double>() ;
+      vmcObsMsg_.commands[1] = obs.commands[0][1].item<double>() ;
+      vmcObsMsg_.commands[2] = obs.commands[0][2].item<double>() ;
 
       vmcObsMsg_.theta[0] = obs.vmc[0][0].item<double>();
       vmcObsMsg_.theta[1] = obs.vmc[0][1].item<double>();
@@ -85,19 +86,49 @@ public:
       vmcObsMsg_.l_dot[0] = obs.vmc[0][6].item<double>();
       vmcObsMsg_.l_dot[1] = obs.vmc[0][7].item<double>();
 
-      vmcObsMsg_.wheel_pos[0] = obs.dof_pos[0][2].item<double>() * params.dof_pos_scale;
-      vmcObsMsg_.wheel_pos[1] = obs.dof_pos[0][5].item<double>() * params.dof_pos_scale;
-      vmcObsMsg_.wheel_vel[0] = obs.dof_vel[0][2].item<double>() * params.dof_vel_scale;
-      vmcObsMsg_.wheel_vel[1] = obs.dof_vel[0][5].item<double>() * params.dof_vel_scale;
+      vmcObsMsg_.wheel_pos[0] = obs.dof_pos[0][2].item<double>() ;
+      vmcObsMsg_.wheel_pos[1] = obs.dof_pos[0][5].item<double>() ;
+      vmcObsMsg_.wheel_vel[0] = obs.dof_vel[0][2].item<double>() ;
+      vmcObsMsg_.wheel_vel[1] = obs.dof_vel[0][5].item<double>() ;
 
-      vmcObsMsg_.actions[0] = obs.actions[0][0].item<double>() * params.action_scale_theta;
-      vmcObsMsg_.actions[1] = obs.actions[0][1].item<double>() * params.action_scale_l;
+      vmcObsMsg_.actions[0] = obs.actions[0][0].item<double>() ;
+      vmcObsMsg_.actions[1] = obs.actions[0][1].item<double>() ;
+      vmcObsMsg_.actions[2] = obs.actions[0][2].item<double>() ;
+      vmcObsMsg_.actions[3] = obs.actions[0][3].item<double>() ;
+      vmcObsMsg_.actions[4] = obs.actions[0][4].item<double>() ;
+      vmcObsMsg_.actions[5] = obs.actions[0][5].item<double>() ;
+      vmcRawObsPub_.publish(vmcObsMsg_);
+
+      vmcObsMsg_.base_ang_vel[0] *= params.ang_vel_scale;
+      vmcObsMsg_.base_ang_vel[1] *= params.ang_vel_scale;
+      vmcObsMsg_.base_ang_vel[2] *= params.ang_vel_scale;
+
+      vmcObsMsg_.commands[0] *= params.commands_scale[0].item<double>();
+      vmcObsMsg_.commands[1] *= params.commands_scale[1].item<double>();
+      vmcObsMsg_.commands[2] *= params.commands_scale[2].item<double>();
+
+      vmcObsMsg_.theta[0] *= params.theta_scale;
+      vmcObsMsg_.theta[1] *= params.theta_scale;
+      vmcObsMsg_.theta_dot[0] *= params.theta_dot_scale;
+      vmcObsMsg_.theta_dot[1] *= params.theta_dot_scale;
+      vmcObsMsg_.l[0] *= params.l_scale;
+      vmcObsMsg_.l[1] *= params.l_scale;
+      vmcObsMsg_.l_dot[0] *= params.l_dot_scale;
+      vmcObsMsg_.l_dot[1] *= params.l_dot_scale;
+
+      vmcObsMsg_.wheel_pos[0] *= params.dof_pos_scale;
+      vmcObsMsg_.wheel_pos[1] *= params.dof_pos_scale;
+      vmcObsMsg_.wheel_vel[0] *= params.dof_vel_scale;
+      vmcObsMsg_.wheel_vel[1] *= params.dof_vel_scale;
+
+      vmcObsMsg_.actions[0] *= params.action_scale_theta;
+      vmcObsMsg_.actions[1] *= params.action_scale_l;
       vmcObsMsg_.actions[1] += params.l_offset;
-      vmcObsMsg_.actions[2] = obs.actions[0][2].item<double>() * params.action_scale_vel;
-      vmcObsMsg_.actions[3] = obs.actions[0][3].item<double>() * params.action_scale_theta;
-      vmcObsMsg_.actions[4] = obs.actions[0][4].item<double>() * params.action_scale_l;
+      vmcObsMsg_.actions[2] *= params.action_scale_vel;
+      vmcObsMsg_.actions[3] *= params.action_scale_theta;
+      vmcObsMsg_.actions[4] *= params.action_scale_l;
       vmcObsMsg_.actions[4] += params.l_offset;
-      vmcObsMsg_.actions[5] = obs.actions[0][5].item<double>() * params.action_scale_vel;;
+      vmcObsMsg_.actions[5] *= params.action_scale_vel;
       vmcObsPub_.publish(vmcObsMsg_);
 
       torch::Tensor actions = Forward();
@@ -181,7 +212,7 @@ private:
   rl_msgs::vmcObs vmcObsMsg_;
   rl_msgs::vmcAction vmcActionMsg_;
   rl_msgs::RobotState robotStateMsg_;
-  ros::Publisher vmcObsPub_, vmcActionPub_;
+  ros::Publisher vmcObsPub_, vmcRawObsPub_, vmcActionPub_;
 };
 
 int main(int argc, char **argv)

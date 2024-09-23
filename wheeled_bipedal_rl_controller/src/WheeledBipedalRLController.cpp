@@ -73,14 +73,15 @@ bool WheeledBipedalRLController::init(hardware_interface::RobotHW* robot_hw, ros
         return false;
       }
     }
-    auto* effortJointInterface = robot_hw->get<hardware_interface::EffortJointInterface>();
-    jointHandles_.push_back(effortJointInterface->getHandle("left_hip_joint"));
-    jointHandles_.push_back(effortJointInterface->getHandle("left_knee_joint"));
-    jointHandles_.push_back(effortJointInterface->getHandle("left_wheel_joint"));
-    jointHandles_.push_back(effortJointInterface->getHandle("right_hip_joint"));
-    jointHandles_.push_back(effortJointInterface->getHandle("right_knee_joint"));
-    jointHandles_.push_back(effortJointInterface->getHandle("right_wheel_joint"));
   }
+
+  auto* effortJointInterface = robot_hw->get<hardware_interface::EffortJointInterface>();
+  jointHandles_.push_back(effortJointInterface->getHandle("left_hip_joint"));
+  jointHandles_.push_back(effortJointInterface->getHandle("left_knee_joint"));
+  jointHandles_.push_back(effortJointInterface->getHandle("left_wheel_joint"));
+  jointHandles_.push_back(effortJointInterface->getHandle("right_hip_joint"));
+  jointHandles_.push_back(effortJointInterface->getHandle("right_knee_joint"));
+  jointHandles_.push_back(effortJointInterface->getHandle("right_wheel_joint"));
 
   // Low-level-controller
   Pids_.resize(jointHandles_.size());
