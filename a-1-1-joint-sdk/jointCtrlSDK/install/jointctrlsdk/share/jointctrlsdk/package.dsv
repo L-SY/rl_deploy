@@ -1,6 +1,0 @@
-source;share/jointctrlsdk/hook/path.ps1
-source;share/jointctrlsdk/hook/path.dsv
-source;share/jointctrlsdk/hook/path.sh
-source;share/jointctrlsdk/hook/pythonscriptspath.ps1
-source;share/jointctrlsdk/hook/pythonscriptspath.dsv
-source;share/jointctrlsdk/hook/pythonscriptspath.sh
