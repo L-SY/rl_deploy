@@ -17,8 +17,23 @@
 #include <hardware_interface/joint_command_interface.h>
 #include <hardware_interface/joint_state_interface.h>
 #include <hardware_interface/robot_hw.h>
+#include "diablo_hw/lib/serial_handle.hpp"
 
 namespace diablo {
+struct DiabloMotorData {
+  double pos_, vel_, tau_;                 // state
+  double cmdTau_;  // command
+};
+
+struct DiabloImuData {
+  double ori_[4];            // NOLINT(modernize-avoid-c-arrays)
+  double oriCov_[9];         // NOLINT(modernize-avoid-c-arrays)
+  double angularVel_[3];     // NOLINT(modernize-avoid-c-arrays)
+  double angularVelCov_[9];  // NOLINT(modernize-avoid-c-arrays)
+  double linearAcc_[3];      // NOLINT(modernize-avoid-c-arrays)
+  double linearAccCov_[9];   // NOLINT(modernize-avoid-c-arrays)
+};
+
 class DiabloHW : public hardware_interface::RobotHW {
 public:
   DiabloHW() = default;
@@ -33,13 +48,25 @@ public:
    */
   bool init(ros::NodeHandle& root_nh, ros::NodeHandle& robot_hw_nh) override;
 
-protected:
-  // Interface
-  hardware_interface::JointStateInterface jointStateInterface_;  // NOLINT(misc-non-private-member-variables-in-classes)
-  hardware_interface::ImuSensorInterface imuSensorInterface_;    // NOLINT(misc-non-private-member-variables-in-classes)
-  hardware_interface::EffortJointInterface effortJointInterface_;
-  // URDF model of the robot
-  std::shared_ptr<urdf::Model> urdfModel_;  // NOLINT(misc-non-private-member-variables-in-classes)
+  /** \brief Communicate with hardware. Get data, status of robot.
+   *
+   * Call @ref UNITREE_LEGGED_SDK::UDP::Recv() to get robot's state.
+   *
+   * @param time Current time
+   * @param period Current time - last time
+   */
+  void read(const ros::Time& time, const ros::Duration& period) override;
+
+  /** \brief Comunicate with hardware. Publish command to robot.
+   *
+   * Propagate joint state to actuator state for the stored
+   * transmission. Limit cmd_effort into suitable value. Call @ref UNITREE_LEGGED_SDK::UDP::Recv(). Publish actuator
+   * current state.
+   *
+   * @param time Current time
+   * @param period Current time - last time
+   */
+  void write(const ros::Time& time, const ros::Duration& period) override;
 
 private:
   /** \brief Load urdf of robot from param server.
@@ -50,6 +77,25 @@ private:
    * @return True if successful.
    */
   bool loadUrdf(ros::NodeHandle& rootNh);
+
+  bool setupJoints();
+
+  bool setupImu();
+
+  // Interface
+  hardware_interface::JointStateInterface jointStateInterface_;  // NOLINT(misc-non-private-member-variables-in-classes)
+  hardware_interface::ImuSensorInterface imuSensorInterface_;    // NOLINT(misc-non-private-member-variables-in-classes)
+  hardware_interface::EffortJointInterface effortJointInterface_;
+  // URDF model of the robot
+  std::shared_ptr<urdf::Model> urdfModel_;  // NOLINT(misc-non-private-member-variables-in-classes)
+
+  // Diablo SDK
+  SerialHandle diabloSDK_;
+  motor_torque_t sendStruct_;
+
+  DiabloImuData imuData_{};
+  DiabloMotorData jointData_[6]{};
+  std::vector<std::string> jointName = {"left_hip_joint", "left_knee_joint", "left_wheel_joint","right_hip_joint", "right_knee_joint", "right_wheel_joint"};
 };
 
 }// namespace diablo
