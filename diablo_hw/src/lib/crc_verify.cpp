@@ -1,4 +1,4 @@
-#include "diablo_hw//lib/crc_verify.hpp"
+#include "diablo_hw/lib/crc_verify.hpp"
 
 /*
  * CRC lookup table for bytes, generating polynomial is 0x8005

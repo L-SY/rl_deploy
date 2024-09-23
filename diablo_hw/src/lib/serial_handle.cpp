@@ -1,4 +1,4 @@
-#include "diablo_hw//lib/serial_handle.hpp"
+#include "diablo_hw/lib/serial_handle.hpp"
 
 SerialHandle::~SerialHandle(){
     mySerial.Close();

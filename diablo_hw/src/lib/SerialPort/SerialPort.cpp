@@ -25,8 +25,8 @@
 #include <iterator>
 
 // User includes
-#include "diablo_hw//lib/VulcanSerial/Exception.hpp"
-#include "diablo_hw//lib/VulcanSerial/SerialPort.hpp"
+#include "diablo_hw/lib/VulcanSerial/Exception.hpp"
+#include "diablo_hw/lib/VulcanSerial/SerialPort.hpp"
 
 #define    BOTHER 0010000
 
