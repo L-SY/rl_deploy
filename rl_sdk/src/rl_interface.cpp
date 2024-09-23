@@ -29,7 +29,7 @@ public:
     nh_.param<std::string>("robot_name", robot_name, "");
     std::string rl_path;
     nh_.param<std::string>("rl_path", rl_path, "");
-    std::string config_path = std::string(rl_path + "/config.yaml");
+    std::string config_path = std::string(rl_path + "/config_vmc.yaml");
     ReadYaml(config_path);
 
     // model
