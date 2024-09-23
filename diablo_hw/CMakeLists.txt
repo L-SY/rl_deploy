@@ -35,6 +35,9 @@ include_directories(
 add_library(${PROJECT_NAME}
         src/DiabloHW.cpp
         src/DIabloHWLoop.cpp
+        src/lib/crc_verify.cpp
+        src/lib/serial_handle.cpp
+        src/lib/SerialPort/SerialPort.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}
@@ -53,6 +56,11 @@ target_link_libraries(diablo_sdk
 
 add_executable(diablo_hw_run
         src/diablo_hw.cpp
+        src/DiabloHW.cpp
+        src/DIabloHWLoop.cpp
+        src/lib/crc_verify.cpp
+        src/lib/serial_handle.cpp
+        src/lib/SerialPort/SerialPort.cpp
 )
 
 target_link_libraries(diablo_hw_run
