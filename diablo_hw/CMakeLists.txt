@@ -51,6 +51,15 @@ target_link_libraries(diablo_sdk
         ${catkin_LIBRARIES}
 )
 
+add_executable(diablo_hw_run
+        src/diablo_hw.cpp
+)
+
+target_link_libraries(diablo_hw_run
+        ${catkin_LIBRARIES}
+        ${PROJECT_NAME}
+)
+
 #########################
 ###   CLANG TOOLING   ###
 #########################

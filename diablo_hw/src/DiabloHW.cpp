@@ -10,7 +10,7 @@ bool DiabloHW::init(ros::NodeHandle& root_nh, ros::NodeHandle& /*robot_hw_nh*/) 
     ROS_ERROR("Error occurred while setting up urdf");
     return false;
   }
-
+  diabloSDK_.serial_init("/dev/ttyUSB0");
   registerInterface(&jointStateInterface_);
   registerInterface(&effortJointInterface_);
   registerInterface(&imuSensorInterface_);
@@ -58,6 +58,9 @@ void DiabloHW::read(const ros::Time& time, const ros::Duration& /*period*/) {
   imuData_.linearAcc_[0] = diabloInfo->accl.x;
   imuData_.linearAcc_[1] = diabloInfo->accl.y;
   imuData_.linearAcc_[2] = diabloInfo->accl.z;
+
+//  TODO: maybe should add some lock and delay
+  diabloSDK_.start_joint_sdk();
 }
 
 void DiabloHW::write(const ros::Time& /*time*/, const ros::Duration& /*period*/) {
@@ -66,6 +69,7 @@ void DiabloHW::write(const ros::Time& /*time*/, const ros::Duration& /*period*/)
     motorCmd[i] = static_cast<float>(jointData_[i].cmdTau_);
   }
   diabloSDK_.create_package(motorCmd,sendStruct_);
+  diabloSDK_.send_commond(sendStruct_);
 }
 
 bool DiabloHW::setupJoints() {
