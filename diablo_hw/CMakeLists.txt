@@ -34,6 +34,7 @@ include_directories(
 
 add_library(${PROJECT_NAME}
         src/DiabloHW.cpp
+        src/DIabloHWLoop.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}
