@@ -90,7 +90,7 @@ private:
   std::shared_ptr<urdf::Model> urdfModel_;  // NOLINT(misc-non-private-member-variables-in-classes)
 
   // Diablo SDK
-  SerialHandle diabloSDK_;
+  std::shared_ptr<SerialHandle> diabloSDK_;
   motor_torque_t sendStruct_;
 
   DiabloImuData imuData_{};

@@ -10,11 +10,15 @@ bool DiabloHW::init(ros::NodeHandle& root_nh, ros::NodeHandle& /*robot_hw_nh*/) 
     ROS_ERROR("Error occurred while setting up urdf");
     return false;
   }
-  diabloSDK_.serial_init("/dev/ttyUSB0");
+  diabloSDK_ = std::make_shared<SerialHandle>();
+  diabloSDK_->serial_init("/dev/ttyUSB0");
+
   registerInterface(&jointStateInterface_);
   registerInterface(&effortJointInterface_);
   registerInterface(&imuSensorInterface_);
 
+  diabloSDK_->start_joint_sdk();
+  ros::Duration(0.5).sleep();
   return true;
 }
 
@@ -29,7 +33,9 @@ bool DiabloHW::loadUrdf(ros::NodeHandle& rootNh) {
 }
 
 void DiabloHW::read(const ros::Time& time, const ros::Duration& /*period*/) {
-  auto diabloInfo = diabloSDK_.rec_package;
+  //  TODO: maybe should add some lock and delay
+  diabloSDK_->start_joint_sdk();
+  auto diabloInfo = diabloSDK_->rec_package;
   auto leftJoints = {diabloInfo->left_hip, diabloInfo->left_knee, diabloInfo->left_wheel};
   auto rightJoints = {diabloInfo->right_hip, diabloInfo->right_knee, diabloInfo->right_wheel};
 
@@ -40,7 +46,6 @@ void DiabloHW::read(const ros::Time& time, const ros::Duration& /*period*/) {
     jointData_[i].tau_ = joint.torque;
     ++i;
   }
-
   for (const auto& joint : rightJoints) {
     jointData_[i].pos_ = joint.pos;
     jointData_[i].vel_ = joint.vel;
@@ -58,18 +63,15 @@ void DiabloHW::read(const ros::Time& time, const ros::Duration& /*period*/) {
   imuData_.linearAcc_[0] = diabloInfo->accl.x;
   imuData_.linearAcc_[1] = diabloInfo->accl.y;
   imuData_.linearAcc_[2] = diabloInfo->accl.z;
-
-//  TODO: maybe should add some lock and delay
-  diabloSDK_.start_joint_sdk();
 }
 
 void DiabloHW::write(const ros::Time& /*time*/, const ros::Duration& /*period*/) {
-  float motorCmd[6] = {0., 0., 0., 0., 0., 0.};
+  float motorCmd[6] = {0., 0., 0., 0., 0., 0.0};
   for (int i = 0; i < 6; ++i) {
     motorCmd[i] = static_cast<float>(jointData_[i].cmdTau_);
   }
-  diabloSDK_.create_package(motorCmd,sendStruct_);
-  diabloSDK_.send_commond(sendStruct_);
+  diabloSDK_->create_package(motorCmd,sendStruct_);
+  diabloSDK_->send_commond(sendStruct_);
 }
 
 bool DiabloHW::setupJoints() {

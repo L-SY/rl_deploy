@@ -7,6 +7,7 @@ SerialHandle::~SerialHandle(){
 }
 
 void SerialHandle::serial_init(const std::string dev){
+    rec_buffer = std::make_shared<uint8_t[]>(100);
     mySerial.SetDevice(dev.c_str());
     mySerial.SetBaudRate(VulcanSerial::BaudRate::B_460800);
     mySerial.SetNumDataBits(VulcanSerial::NumDataBits::EIGHT);
@@ -50,33 +51,38 @@ void SerialHandle::serial_recive(void){
         {
             for(uint8_t i = 0;i< sizeof(uart_packet_t);i++)
             {
-                std::cout << dec << (uint32_t)rec_buffer[i] << "\t"  << dec << (uint32_t)i<< std::endl;
+//                std::cout << dec << (uint32_t)rec_buffer[i] << "\t"  << dec << (uint32_t)i<< std::endl;
             }
             receive_test = 1;
         }
         // Decode the packet and print in here
-        if(JOINT_CTRL::verify_crc16(rec_buffer,sizeof(uart_packet_t))) 
+        if(JOINT_CTRL::verify_crc16(rec_buffer.get(),sizeof(uart_packet_t)))
         {
-            std::cout<<  "Accl :\t "
-            << ((uart_packet_t*)(rec_buffer))->accl.x / 1638.5f<< "\t\t" 
-            << ((uart_packet_t*)(rec_buffer))->accl.y / 1638.5f<< "\t\t"
-            << ((uart_packet_t*)(rec_buffer))->accl.z / 1638.5f << "\r\n"
-            << std::endl; 
-            std::cout<<  "Gyro :\t "
-            << ((uart_packet_t*)(rec_buffer))->gyro.x / 327.67f<< "\t\t" 
-            << ((uart_packet_t*)(rec_buffer))->gyro.y / 327.67f<< "\t\t"
-            << ((uart_packet_t*)(rec_buffer))->gyro.z / 327.67f << "\r\n"
-            << std::endl; 
-            std::cout<<  "Quat :\t "
-            << ((uart_packet_t*)(rec_buffer))->orientation.w / 32767.f<< "\t\t" 
-            << ((uart_packet_t*)(rec_buffer))->orientation.x / 32767.f<< "\t\t"
-            << ((uart_packet_t*)(rec_buffer))->orientation.y / 32767.f<< "\t\t"
-            << ((uart_packet_t*)(rec_buffer))->orientation.z / 32767.f << "\r\n"
-            << std::endl; 
+//            std::cout<<  "Accl :\t "
+//            << ((uart_packet_t*)(rec_buffer))->accl.x / 1638.5f<< "\t\t"
+//            << ((uart_packet_t*)(rec_buffer))->accl.y / 1638.5f<< "\t\t"
+//            << ((uart_packet_t*)(rec_buffer))->accl.z / 1638.5f << "\r\n"
+//            << std::endl;
+//            std::cout<<  "Gyro :\t "
+//            << ((uart_packet_t*)(rec_buffer))->gyro.x / 327.67f<< "\t\t"
+//            << ((uart_packet_t*)(rec_buffer))->gyro.y / 327.67f<< "\t\t"
+//            << ((uart_packet_t*)(rec_buffer))->gyro.z / 327.67f << "\r\n"
+//            << std::endl;
+//            std::cout<<  "Quat :\t "
+//            << ((uart_packet_t*)(rec_buffer))->orientation.w / 32767.f<< "\t\t"
+//            << ((uart_packet_t*)(rec_buffer))->orientation.x / 32767.f<< "\t\t"
+//            << ((uart_packet_t*)(rec_buffer))->orientation.y / 32767.f<< "\t\t"
+//            << ((uart_packet_t*)(rec_buffer))->orientation.z / 32767.f << "\r\n"
+//            << std::endl;
+//TODO : shold add depackage
+//            std::cout<<  "Joint :\t "
+//            << ((uart_packet_t*)(rec_buffer))->left_wheel.pos<< "\t\t"
+//            << ((uart_packet_t*)(rec_buffer))->left_wheel.vel<< "\t\t"
+//            << ((uart_packet_t*)(rec_buffer))->left_wheel.torque<< "\r\n"
+//            << std::endl;
             continue;
-
         }
-        rec_package = (uart_packet_t*)(rec_buffer);
+        rec_package = (uart_packet_t*)(rec_buffer.get());
     }
 }
 

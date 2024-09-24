@@ -17,10 +17,11 @@ class SerialHandle
 {
 private:
     bool rec_loop;
-    uint8_t   rec_buffer[100];
+    std::shared_ptr<uint8_t[]>   rec_buffer;
     VulcanSerial::SerialPort      mySerial;
     std::shared_ptr<std::thread> serial_rx_thd;
     uint16_t send_cnt = 0;
+
 private:
     void serial_recive(void);
 
