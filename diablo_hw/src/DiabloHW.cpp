@@ -39,22 +39,29 @@ void DiabloHW::read(const ros::Time& time, const ros::Duration& /*period*/) {
   //  TODO: maybe should add some lock and delay
   diabloSDK_->start_joint_sdk();
   auto diabloInfo = diabloSDK_->rec_package;
-  ROS_INFO_STREAM(diabloSDK_->rec_package->left_hip.pos);
   auto leftJoints = {diabloInfo->left_hip, diabloInfo->left_knee, diabloInfo->left_wheel};
   auto rightJoints = {diabloInfo->right_hip, diabloInfo->right_knee, diabloInfo->right_wheel};
-
+  std::vector<double> leftJointOffset = { -1.12 + 2 * M_PI, -2.8 + 2 * M_PI, 0.};
+  std::vector<double> rightJointOffset = { 0., -2 * M_PI, 0.};
   int i = 0;
   for (const auto& joint : leftJoints) {
-    jointData_[i].pos_ = joint.pos / 5215.03;
+    jointData_[i].pos_ = joint.pos / 5215.03f;
+    jointData_[i].pos_ += leftJointOffset[i];
     jointData_[i].vel_ = joint.vel / 655.34f;
     jointData_[i].tau_ = joint.torque / 655.34f;
+    jointData_[i].pos_ *= -1;
+    jointData_[i].vel_ *= -1;
+    jointData_[i].tau_ *= -1;
     ++i;
   }
   for (const auto& joint : rightJoints) {
-    jointData_[i].pos_ = joint.pos / 5215.03;
-    jointData_[i].pos_ += 2 * M_PI;
+    jointData_[i].pos_ = joint.pos / 5215.03f;
+    jointData_[i].pos_ += rightJointOffset[i];
     jointData_[i].vel_ = joint.vel / 655.34f;
     jointData_[i].tau_ = joint.torque / 655.34f;
+    jointData_[i].pos_ *= -1;
+    jointData_[i].vel_ *= -1;
+    jointData_[i].tau_ *= -1;
     ++i;
   }
 
@@ -73,7 +80,7 @@ void DiabloHW::read(const ros::Time& time, const ros::Duration& /*period*/) {
 void DiabloHW::write(const ros::Time& /*time*/, const ros::Duration& /*period*/) {
   float motorCmd[6] = {0., 0., 0., 0., 0., 0.0};
   for (int i = 0; i < 6; ++i) {
-    motorCmd[i] = static_cast<float>(jointData_[i].cmdTau_);
+    motorCmd[i] = static_cast<float>(jointData_[i].cmdTau_) * (-1.);
   }
   diabloSDK_->create_package(motorCmd,sendStruct_);
   diabloSDK_->send_commond(sendStruct_);

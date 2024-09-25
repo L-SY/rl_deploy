@@ -8,7 +8,7 @@ SerialHandle::~SerialHandle(){
 }
 
 void SerialHandle::serial_init(const std::string dev){
-    rec_package = std::make_shared<uart_packet_t>();
+    rec_package = std::shared_ptr<uart_packet_t>((uart_packet_t*)(rec_buffer));
     mySerial.SetDevice(dev.c_str());
     mySerial.SetBaudRate(VulcanSerial::BaudRate::B_460800);
     mySerial.SetNumDataBits(VulcanSerial::NumDataBits::EIGHT);
@@ -75,9 +75,7 @@ void SerialHandle::serial_recive(void){
 //            << ((uart_packet_t*)(rec_buffer.get()))->orientation.y / 32767.f<< "\t\t"
 //            << ((uart_packet_t*)(rec_buffer.get()))->orientation.z / 32767.f << "\r\n"
 //            << std::endl;
-            continue;
         }
-        rec_package = std::shared_ptr<uart_packet_t>((uart_packet_t*)(rec_buffer));
     }
 }
 

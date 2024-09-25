@@ -97,8 +97,8 @@ private:
   motor_torque_t sendStruct_;
 
   DiabloImuData imuData_{};
-  DiabloMotorData jointData_[6]{};
-  std::vector<std::string> jointName = {"left_hip_joint", "left_knee_joint", "left_wheel_joint","right_hip_joint", "right_knee_joint", "right_wheel_joint"};
+  DiabloMotorData jointData_[8]{};
+  std::vector<std::string> jointName = {"left_fake_hip_joint", "left_hip_joint", "left_wheel_joint","right_fake_hip_joint", "right_hip_joint", "right_wheel_joint"};
 };
 
 }// namespace diablo
