@@ -5,7 +5,6 @@
 #include <string>
 #include <pluginlib/class_list_macros.h>
 #include "wheeled_bipedal_rl_controller/WheeledBipedalRLController.h"
-#include <torch/script.h>
 
 namespace rl_controller
 {
@@ -139,8 +138,8 @@ void WheeledBipedalRLController::update(const ros::Time& time, const ros::Durati
           M_PI + jointHandles_[3].getPosition() - hipBias_,jointHandles_[3].getVelocity(), jointHandles_[3].getEffort(),
           jointHandles_[4].getPosition() - M_PI - kneeBias_, jointHandles_[4].getVelocity(), jointHandles_[4].getEffort());
   }
-  rl(time,period);
-//  prostrate(time,period);
+//  rl(time,period);
+  prostrate(time,period);
   pubRLState();
 }
 
@@ -160,7 +159,7 @@ void WheeledBipedalRLController::prostrate (const ros::Time& time, const ros::Du
   jointHandles_[2].setCommand(Pids_[2].computeCommand(Vleft-jointHandles_[2].getVelocity(),period));
   jointHandles_[5].setCommand(Pids_[5].computeCommand(Vright-jointHandles_[5].getVelocity(),period));
 
-  ROS_INFO_STREAM("prostrate  Mode");
+//  ROS_INFO_STREAM("prostrate  Mode");
 }
 
 void WheeledBipedalRLController::rl(const ros::Time& time, const ros::Duration& period)
@@ -186,6 +185,19 @@ void WheeledBipedalRLController::pubRLState()
   robotStateMsg_.imu_states.orientation.y = imuSensorHandle_.getOrientation()[1];
   robotStateMsg_.imu_states.orientation.z = imuSensorHandle_.getOrientation()[2];
   robotStateMsg_.imu_states.orientation.w = imuSensorHandle_.getOrientation()[3];
+
+//  For test imu
+//  geometry_msgs::Quaternion base;
+//  double roll, pitch, yaw;
+//  base.x = imuSensorHandle_.getOrientation()[0];
+//  base.y = imuSensorHandle_.getOrientation()[1];
+//  base.z = imuSensorHandle_.getOrientation()[2];
+//  base.w = imuSensorHandle_.getOrientation()[3];
+//  robot_common::quatToRPY(base,roll,pitch,yaw);
+//  ROS_INFO_STREAM("Roll==" << roll);
+//  ROS_INFO_STREAM("Pitch==" << pitch);
+//  ROS_INFO_STREAM("Yaw==" << yaw);
+
   robotStateMsg_.imu_states.angular_velocity.x = imuSensorHandle_.getAngularVelocity()[0];
   robotStateMsg_.imu_states.angular_velocity.y = imuSensorHandle_.getAngularVelocity()[1];
   robotStateMsg_.imu_states.angular_velocity.z = imuSensorHandle_.getAngularVelocity()[2];
