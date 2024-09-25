@@ -8,7 +8,7 @@ SerialHandle::~SerialHandle(){
 }
 
 void SerialHandle::serial_init(const std::string dev){
-    rec_buffer = std::make_shared<uint8_t[]>(100);
+    rec_package = std::make_shared<uart_packet_t>();
     mySerial.SetDevice(dev.c_str());
     mySerial.SetBaudRate(VulcanSerial::BaudRate::B_460800);
     mySerial.SetNumDataBits(VulcanSerial::NumDataBits::EIGHT);
@@ -57,7 +57,7 @@ void SerialHandle::serial_recive(void){
             receive_test = 1;
         }
         // Decode the packet and print in here
-        if(JOINT_CTRL::verify_crc16(rec_buffer.get(),sizeof(uart_packet_t)))
+        if(JOINT_CTRL::verify_crc16(rec_buffer,sizeof(uart_packet_t)))
         {
 //            std::cout<<  "Accl :\t "
 //            << ((uart_packet_t*)(rec_buffer.get()))->accl.x / 1638.5f<< "\t\t"
@@ -77,7 +77,7 @@ void SerialHandle::serial_recive(void){
 //            << std::endl;
             continue;
         }
-        rec_package = (uart_packet_t*)(rec_buffer.get());
+        rec_package = std::shared_ptr<uart_packet_t>((uart_packet_t*)(rec_buffer));
     }
 }
 

@@ -39,6 +39,7 @@ void DiabloHW::read(const ros::Time& time, const ros::Duration& /*period*/) {
   //  TODO: maybe should add some lock and delay
   diabloSDK_->start_joint_sdk();
   auto diabloInfo = diabloSDK_->rec_package;
+  ROS_INFO_STREAM(diabloSDK_->rec_package->left_hip.pos);
   auto leftJoints = {diabloInfo->left_hip, diabloInfo->left_knee, diabloInfo->left_wheel};
   auto rightJoints = {diabloInfo->right_hip, diabloInfo->right_knee, diabloInfo->right_wheel};
 
@@ -56,7 +57,7 @@ void DiabloHW::read(const ros::Time& time, const ros::Duration& /*period*/) {
     jointData_[i].tau_ = joint.torque / 655.34f;
     ++i;
   }
-  ROS_INFO_STREAM(jointData_[0].pos_);
+
   imuData_.ori_[0] = diabloInfo->orientation.x / 32767.f;
   imuData_.ori_[1] = diabloInfo->orientation.y / 32767.f;
   imuData_.ori_[2] = diabloInfo->orientation.z / 32767.f;

@@ -17,7 +17,7 @@ class SerialHandle
 {
 private:
     bool rec_loop;
-    std::shared_ptr<uint8_t[]>   rec_buffer;
+    uint8_t   rec_buffer[100];
     VulcanSerial::SerialPort      mySerial;
     std::shared_ptr<std::thread> serial_rx_thd;
     uint16_t send_cnt = 0;
@@ -27,7 +27,7 @@ private:
 
     
 public:
-    uart_packet_t* rec_package;
+  std::shared_ptr<uart_packet_t> rec_package;
     
 public:
     void send_commond(const motor_torque_t& ctrl_package);
