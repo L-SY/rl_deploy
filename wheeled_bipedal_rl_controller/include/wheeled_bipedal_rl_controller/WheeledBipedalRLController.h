@@ -33,6 +33,8 @@
 #include "vmc/ParallelVMC.h"
 #include "vmc/SerialVMC.h"
 
+#include "robot_common/utilities/lp_filter.h"
+
 namespace rl_controller
 {
 class WheeledBipedalRLController
@@ -51,7 +53,7 @@ public:
   bool init(hardware_interface::RobotHW* robot_hw, ros::NodeHandle& root_nh, ros::NodeHandle& controller_nh) override;
   void starting(const ros::Time& time) override;
   void update(const ros::Time& time, const ros::Duration& period) override;
-  void setCommand(const ros::Duration& period);
+  void setCommand(const ros::Time& time, const ros::Duration& period);
   void pubRLState();
   void initStateMsg();
 private:
@@ -99,6 +101,8 @@ private:
   // prostrate
   double prostrateHip_;
   double prostrateKnee_;
+
+  std::vector<LowPassFilter> actionLPFs_;
 };
 
 }  // namespace rl_controller

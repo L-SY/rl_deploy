@@ -107,6 +107,11 @@ bool WheeledBipedalRLController::init(hardware_interface::RobotHW* robot_hw, ros
 
   // init
   initStateMsg();
+  double lp_cutoff_frequency;
+  controller_nh.param("lp_cutoff_frequency", lp_cutoff_frequency, 50.);
+  for (int i = 0; i < 6; ++i) {
+    actionLPFs_.emplace_back(lp_cutoff_frequency);
+  }
 
   geometry_msgs::Twist initTwist;
   initTwist.linear.x = 0.0;
@@ -164,7 +169,7 @@ void WheeledBipedalRLController::prostrate (const ros::Time& time, const ros::Du
 void WheeledBipedalRLController::rl(const ros::Time& time, const ros::Duration& period)
 {
 //TODO ：add set control.x, control.y, control.yaw.
-  setCommand(period);
+  setCommand(time, period);
 }
 
 void WheeledBipedalRLController::commandCB(const geometry_msgs::Twist& msg)
@@ -242,17 +247,21 @@ void WheeledBipedalRLController::pubRLState()
   robotStatePub_.publish(robotStateMsg_);
 }
 
-void WheeledBipedalRLController::setCommand(const ros::Duration& period)
+void WheeledBipedalRLController::setCommand(const ros::Time& time, const ros::Duration& period)
 {
   auto rt_buffer = rlCmdRtBuffer_.readFromRT();
-  const auto& data = rt_buffer->data;
+  auto& data = rt_buffer->data;
 
   if (data.empty())
   {
-    jointHandles_[0].setCommand(Pids_[0].computeCommand(0-jointHandles_[0].getPosition(),period));
-    jointHandles_[1].setCommand(Pids_[1].computeCommand(0-jointHandles_[1].getPosition(),period));
-    jointHandles_[3].setCommand(Pids_[3].computeCommand(0-jointHandles_[3].getPosition(),period));
-    jointHandles_[4].setCommand(Pids_[4].computeCommand(0-jointHandles_[4].getPosition(),period));
+//    jointHandles_[0].setCommand(Pids_[0].computeCommand(0-jointHandles_[0].getPosition(),period));
+//    jointHandles_[1].setCommand(Pids_[1].computeCommand(0-jointHandles_[1].getPosition(),period));
+//    jointHandles_[3].setCommand(Pids_[3].computeCommand(0-jointHandles_[3].getPosition(),period));
+//    jointHandles_[4].setCommand(Pids_[4].computeCommand(0-jointHandles_[4].getPosition(),period));
+    jointHandles_[0].setCommand(0);
+    jointHandles_[1].setCommand(0);
+    jointHandles_[3].setCommand(0);
+    jointHandles_[4].setCommand(0);
 
     jointHandles_[2].setCommand(0);
     jointHandles_[5].setCommand(0);
@@ -260,6 +269,11 @@ void WheeledBipedalRLController::setCommand(const ros::Duration& period)
   }
   else
   {
+    for (int i = 0; i < static_cast<int>(actionLPFs_.size()); ++i)
+    {
+        actionLPFs_[i].input(data[i],time);
+        data[i] = actionLPFs_[i].output();
+    }
     if (useVMC_)
     {
 //      ROS_INFO_STREAM("rl vmc");
