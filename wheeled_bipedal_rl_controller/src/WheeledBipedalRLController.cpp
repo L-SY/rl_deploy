@@ -38,13 +38,14 @@ bool WheeledBipedalRLController::init(hardware_interface::RobotHW* robot_hw, ros
   // vmc
   ros::NodeHandle vmc_nh(controller_nh, "vmc");
   vmc_nh.param("use_vmc", useVMC_, false);
-
   if (useVMC_)
   {
     std::string left_type, right_type;
     double left_l1, left_l2, right_l1, right_l2;
     double left_centre_offset, right_centre_offset;
-
+    vmc_nh.param("hip_bias", hipBias_, 0.);
+    vmc_nh.param("hip_bias", kneeBias_, 0.);
+    vmc_nh.param("knee_offset", useVMC_, false);
     vmc_nh.param("gravity_feedforward", gravityFeedforward_, 50.0);
 
     vmc_nh.param("left_vmc/l1", left_l1, 0.14);
@@ -132,11 +133,11 @@ void WheeledBipedalRLController::update(const ros::Time& time, const ros::Durati
   {
       // change for diablo urdf
       leftSerialVMCPtr_->update(
-          M_PI + jointHandles_[0].getPosition() - 0.13433 ,jointHandles_[0].getVelocity(), jointHandles_[0].getEffort(),
-          jointHandles_[1].getPosition() - M_PI + 0.2687, jointHandles_[1].getVelocity(), jointHandles_[1].getEffort());
+          M_PI + jointHandles_[0].getPosition() - hipBias_ ,jointHandles_[0].getVelocity(), jointHandles_[0].getEffort(),
+          jointHandles_[1].getPosition() - M_PI - kneeBias_, jointHandles_[1].getVelocity(), jointHandles_[1].getEffort());
       rightSerialVMCPtr_->update(
-          M_PI + jointHandles_[3].getPosition() -0.13433,jointHandles_[3].getVelocity(), jointHandles_[3].getEffort(),
-          jointHandles_[4].getPosition() - M_PI + 0.2687, jointHandles_[4].getVelocity(), jointHandles_[4].getEffort());
+          M_PI + jointHandles_[3].getPosition() - hipBias_,jointHandles_[3].getVelocity(), jointHandles_[3].getEffort(),
+          jointHandles_[4].getPosition() - M_PI - kneeBias_, jointHandles_[4].getVelocity(), jointHandles_[4].getEffort());
   }
   rl(time,period);
 //  prostrate(time,period);
@@ -255,8 +256,6 @@ void WheeledBipedalRLController::setCommand(const ros::Duration& period)
 
     std::vector<double> leftJointCmd = leftSerialVMCPtr_->getDesJointEff(leftSerialVMCPtr_->phi1_,leftSerialVMCPtr_->phi2_,leftFR + gravityFeedforward_, leftFTheta );
     std::vector<double> rightJointCmd = rightSerialVMCPtr_->getDesJointEff(rightSerialVMCPtr_->phi1_,rightSerialVMCPtr_->phi2_,rightFR + gravityFeedforward_, rightFTheta );
-//    std::vector<double> leftJointCmd = leftSerialVMCPtr_->getDesJointEff(leftSerialVMCPtr_->phi1_,leftSerialVMCPtr_->phi2_,leftFR, leftFTheta);
-//    std::vector<double> rightJointCmd = rightSerialVMCPtr_->getDesJointEff(rightSerialVMCPtr_->phi1_,rightSerialVMCPtr_->phi2_,rightFR, rightFTheta);
 
     jointHandles_[0].setCommand(leftJointCmd[0]);
     jointHandles_[1].setCommand(leftJointCmd[1]);
