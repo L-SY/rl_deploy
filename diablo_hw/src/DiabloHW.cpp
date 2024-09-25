@@ -16,7 +16,10 @@ bool DiabloHW::init(ros::NodeHandle& root_nh, ros::NodeHandle& /*robot_hw_nh*/) 
   registerInterface(&jointStateInterface_);
   registerInterface(&effortJointInterface_);
   registerInterface(&imuSensorInterface_);
+  registerInterface(&robotStateInterface_);
 
+  setupJoints();
+  setupImu();
   diabloSDK_->start_joint_sdk();
   ros::Duration(0.5).sleep();
   return true;
@@ -41,28 +44,29 @@ void DiabloHW::read(const ros::Time& time, const ros::Duration& /*period*/) {
 
   int i = 0;
   for (const auto& joint : leftJoints) {
-    jointData_[i].pos_ = joint.pos;
-    jointData_[i].vel_ = joint.vel;
-    jointData_[i].tau_ = joint.torque;
+    jointData_[i].pos_ = joint.pos / 5215.03;
+    jointData_[i].vel_ = joint.vel / 655.34f;
+    jointData_[i].tau_ = joint.torque / 655.34f;
     ++i;
   }
   for (const auto& joint : rightJoints) {
-    jointData_[i].pos_ = joint.pos;
-    jointData_[i].vel_ = joint.vel;
-    jointData_[i].tau_ = joint.torque;
+    jointData_[i].pos_ = joint.pos / 5215.03;
+    jointData_[i].pos_ += 2 * M_PI;
+    jointData_[i].vel_ = joint.vel / 655.34f;
+    jointData_[i].tau_ = joint.torque / 655.34f;
     ++i;
   }
-
-  imuData_.ori_[0] = diabloInfo->orientation.x;
-  imuData_.ori_[1] = diabloInfo->orientation.y;
-  imuData_.ori_[2] = diabloInfo->orientation.z;
-  imuData_.ori_[3] = diabloInfo->orientation.w;
-  imuData_.angularVel_[0] = diabloInfo->gyro.x;
-  imuData_.angularVel_[1] = diabloInfo->gyro.y;
-  imuData_.angularVel_[2] = diabloInfo->gyro.z;
-  imuData_.linearAcc_[0] = diabloInfo->accl.x;
-  imuData_.linearAcc_[1] = diabloInfo->accl.y;
-  imuData_.linearAcc_[2] = diabloInfo->accl.z;
+  ROS_INFO_STREAM(jointData_[0].pos_);
+  imuData_.ori_[0] = diabloInfo->orientation.x / 32767.f;
+  imuData_.ori_[1] = diabloInfo->orientation.y / 32767.f;
+  imuData_.ori_[2] = diabloInfo->orientation.z / 32767.f;
+  imuData_.ori_[3] = diabloInfo->orientation.w / 32767.f;
+  imuData_.angularVel_[0] = diabloInfo->gyro.x / 327.67f;
+  imuData_.angularVel_[1] = diabloInfo->gyro.y / 327.67f;
+  imuData_.angularVel_[2] = diabloInfo->gyro.z / 327.67f;
+  imuData_.linearAcc_[0] = diabloInfo->accl.x / 1638.5f;
+  imuData_.linearAcc_[1] = diabloInfo->accl.y / 1638.5f;
+  imuData_.linearAcc_[2] = diabloInfo->accl.z / 1638.5f;
 }
 
 void DiabloHW::write(const ros::Time& /*time*/, const ros::Duration& /*period*/) {

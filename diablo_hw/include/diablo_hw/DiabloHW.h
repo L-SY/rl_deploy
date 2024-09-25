@@ -16,6 +16,7 @@
 #include <hardware_interface/imu_sensor_interface.h>
 #include <hardware_interface/joint_command_interface.h>
 #include <hardware_interface/joint_state_interface.h>
+#include <robot_common/interface/hardware_interface/robot_state_interface.h>
 #include <hardware_interface/robot_hw.h>
 #include "diablo_hw/lib/serial_handle.hpp"
 
@@ -86,6 +87,8 @@ private:
   hardware_interface::JointStateInterface jointStateInterface_;  // NOLINT(misc-non-private-member-variables-in-classes)
   hardware_interface::ImuSensorInterface imuSensorInterface_;    // NOLINT(misc-non-private-member-variables-in-classes)
   hardware_interface::EffortJointInterface effortJointInterface_;
+  hardware_interface::RobotStateInterface robotStateInterface_;
+
   // URDF model of the robot
   std::shared_ptr<urdf::Model> urdfModel_;  // NOLINT(misc-non-private-member-variables-in-classes)
 

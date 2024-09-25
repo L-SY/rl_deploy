@@ -1,4 +1,5 @@
 #include "diablo_hw/lib/serial_handle.hpp"
+#include "math.h"
 
 SerialHandle::~SerialHandle(){
     mySerial.Close();
@@ -59,26 +60,20 @@ void SerialHandle::serial_recive(void){
         if(JOINT_CTRL::verify_crc16(rec_buffer.get(),sizeof(uart_packet_t)))
         {
 //            std::cout<<  "Accl :\t "
-//            << ((uart_packet_t*)(rec_buffer))->accl.x / 1638.5f<< "\t\t"
-//            << ((uart_packet_t*)(rec_buffer))->accl.y / 1638.5f<< "\t\t"
-//            << ((uart_packet_t*)(rec_buffer))->accl.z / 1638.5f << "\r\n"
+//            << ((uart_packet_t*)(rec_buffer.get()))->accl.x / 1638.5f<< "\t\t"
+//            << ((uart_packet_t*)(rec_buffer.get()))->accl.y / 1638.5f<< "\t\t"
+//            << ((uart_packet_t*)(rec_buffer.get()))->accl.z / 1638.5f << "\r\n"
 //            << std::endl;
 //            std::cout<<  "Gyro :\t "
-//            << ((uart_packet_t*)(rec_buffer))->gyro.x / 327.67f<< "\t\t"
-//            << ((uart_packet_t*)(rec_buffer))->gyro.y / 327.67f<< "\t\t"
-//            << ((uart_packet_t*)(rec_buffer))->gyro.z / 327.67f << "\r\n"
+//            << ((uart_packet_t*)(rec_buffer.get()))->gyro.x / 327.67f<< "\t\t"
+//            << ((uart_packet_t*)(rec_buffer.get()))->gyro.y / 327.67f<< "\t\t"
+//            << ((uart_packet_t*)(rec_buffer.get()))->gyro.z / 327.67f << "\r\n"
 //            << std::endl;
 //            std::cout<<  "Quat :\t "
-//            << ((uart_packet_t*)(rec_buffer))->orientation.w / 32767.f<< "\t\t"
-//            << ((uart_packet_t*)(rec_buffer))->orientation.x / 32767.f<< "\t\t"
-//            << ((uart_packet_t*)(rec_buffer))->orientation.y / 32767.f<< "\t\t"
-//            << ((uart_packet_t*)(rec_buffer))->orientation.z / 32767.f << "\r\n"
-//            << std::endl;
-//TODO : shold add depackage
-//            std::cout<<  "Joint :\t "
-//            << ((uart_packet_t*)(rec_buffer))->left_wheel.pos<< "\t\t"
-//            << ((uart_packet_t*)(rec_buffer))->left_wheel.vel<< "\t\t"
-//            << ((uart_packet_t*)(rec_buffer))->left_wheel.torque<< "\r\n"
+//            << ((uart_packet_t*)(rec_buffer.get()))->orientation.w / 32767.f<< "\t\t"
+//            << ((uart_packet_t*)(rec_buffer.get()))->orientation.x / 32767.f<< "\t\t"
+//            << ((uart_packet_t*)(rec_buffer.get()))->orientation.y / 32767.f<< "\t\t"
+//            << ((uart_packet_t*)(rec_buffer.get()))->orientation.z / 32767.f << "\r\n"
 //            << std::endl;
             continue;
         }
