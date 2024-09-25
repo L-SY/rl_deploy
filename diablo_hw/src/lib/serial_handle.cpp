@@ -39,6 +39,7 @@ void SerialHandle::serial_recive(void){
         }
         for(uint16_t i = 1; i < sizeof(uart_packet_t); i++)
         {
+            std::lock_guard<std::mutex> lock(buffer_mutex);
             int result = mySerial.ReadChar();
             if(result == -1){
                 std::cerr<<"Serial receive timeout occured 2!"<<std::endl;

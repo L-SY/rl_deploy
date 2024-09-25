@@ -98,6 +98,8 @@ private:
 
   DiabloImuData imuData_{};
   DiabloMotorData jointData_[8]{};
+  std::vector<double> leftJointOffset_ = { -1.12 + 2 * M_PI, -2.8 + 2 * M_PI, 0.};
+  std::vector<double> rightJointOffset_ = { -1.12, -2.8, 0.};
   std::vector<std::string> jointName = {"left_fake_hip_joint", "left_hip_joint", "left_wheel_joint","right_fake_hip_joint", "right_hip_joint", "right_wheel_joint"};
 };
 

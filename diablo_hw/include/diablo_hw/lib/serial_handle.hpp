@@ -10,6 +10,7 @@
 #include "crc_verify.hpp"
 #include "joint_ctrl_protocol.h"
 #include "VulcanSerial/SerialPort.hpp"
+#include <mutex>
 
 using namespace std;
 
@@ -27,6 +28,7 @@ private:
 
     
 public:
+  std::mutex buffer_mutex;
   std::shared_ptr<uart_packet_t> rec_package;
     
 public:
