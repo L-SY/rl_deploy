@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="robot">
+
+    <xacro:arg name="robot_type" default="diablo"/>
+
+    <xacro:arg name="load_chassis" default="true"/>
+    <xacro:arg name="fixed_leg" default="false"/>
+    <xacro:arg name="fixed_wheel" default="false"/>
+    <xacro:arg name="use_gazebo" default="true"/>
+    <xacro:arg name="close_chain" default="false"/>
+    <xacro:arg name="use_simulation" default="false"/>
+
+    <xacro:if value="$(arg load_chassis)">
+        <xacro:include filename="$(find diablo)/urdf/diablo.urdf.xacro"/>
+        <xacro:chassis fixed_wheel="$(arg fixed_wheel)" fixed_leg="$(arg fixed_leg)"  close_chain="$(arg close_chain)" use_gazebo="$(arg use_gazebo)" use_simulation="$(arg use_simulation)" />
+    </xacro:if>
+
+    <xacro:if value="$(arg use_simulation)">
+        <gazebo>
+            <plugin name="robot_ros_control" filename="librobot_hw_sim.so">
+                <robotNamespace>/</robotNamespace>
+                <robotSimType>robot_gazebo/RobotHWSim</robotSimType>
+            </plugin>
+        </gazebo>
+    </xacro:if>
+</robot>
