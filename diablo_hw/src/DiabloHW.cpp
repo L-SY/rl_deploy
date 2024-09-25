@@ -20,6 +20,13 @@ bool DiabloHW::init(ros::NodeHandle& root_nh, ros::NodeHandle& /*robot_hw_nh*/) 
 
   setupJoints();
   setupImu();
+
+  double lp_cutoff_frequency;
+  root_nh.param("lp_cutoff_frequency", lp_cutoff_frequency, 50.);
+  for (int i = 0; i < 6; ++i) {
+    velLPFs_.emplace_back(lp_cutoff_frequency);
+  }
+
   diabloSDK_->start_joint_sdk();
   ros::Duration(0.5).sleep();
   return true;
@@ -44,7 +51,8 @@ void DiabloHW::read(const ros::Time& time, const ros::Duration& /*period*/) {
   for (const auto& joint : leftJoints) {
     jointData_[i].pos_ = joint.pos / 5215.03f;
     jointData_[i].pos_ += leftJointOffset_[i];
-    jointData_[i].vel_ = joint.vel / 655.34f;
+    velLPFs_[i].input(joint.vel / 655.34f);
+    jointData_[i].vel_ = velLPFs_[i].output();
     jointData_[i].tau_ = joint.torque / 655.34f;
     jointData_[i].pos_ *= jointDirection_[i];
     jointData_[i].vel_ *= jointDirection_[i];
@@ -55,7 +63,8 @@ void DiabloHW::read(const ros::Time& time, const ros::Duration& /*period*/) {
   for (const auto& joint : rightJoints) {
     jointData_[i+j].pos_ = joint.pos / 5215.03f;
     jointData_[i+j].pos_ += rightJointOffset_[j];
-    jointData_[i+j].vel_ = joint.vel / 655.34f;
+    velLPFs_[i+j].input(joint.vel / 655.34f);
+    jointData_[i+j].vel_ = velLPFs_[i+j].output();
     jointData_[i+j].tau_ = joint.torque / 655.34f;
     jointData_[i+j].pos_ *= jointDirection_[j];
     jointData_[i+j].vel_ *= jointDirection_[j];

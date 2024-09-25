@@ -19,6 +19,7 @@
 #include <robot_common/interface/hardware_interface/robot_state_interface.h>
 #include <hardware_interface/robot_hw.h>
 #include "diablo_hw/lib/serial_handle.hpp"
+#include "robot_common/utilities/lp_filter.h"
 
 namespace diablo {
 struct DiabloMotorData {
@@ -98,6 +99,7 @@ private:
 
   DiabloImuData imuData_{};
   DiabloMotorData jointData_[8]{};
+  std::vector<LowPassFilter> velLPFs_;
   std::vector<double> leftJointOffset_ = { -1.12 + 2 * M_PI, -2.8 + 2 * M_PI, 0.};
   std::vector<double> rightJointOffset_ = { -1.12, -2.8, 0.};
   std::vector<double> jointDirection_ = { -1., -1., 1., -1., -1., 1. };
