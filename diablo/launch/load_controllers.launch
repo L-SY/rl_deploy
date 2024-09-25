@@ -1,0 +1,19 @@
+<?xml version="1.0" ?>
+
+<launch>
+    <!-- make the files into global parameters -->
+    <rosparam file="$(find diablo)/config/controllers.yaml" command="load"/>
+
+    <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false"
+          output="screen" ns="/" args="controllers/joint_state_controller
+                                    controllers/robot_state_controller
+                                    controllers/wheeled_bipedal_rl_controller
+                                    " />
+
+<!--    <node name="controller_loader" pkg="controller_manager" type="controller_manager"-->
+<!--          output="screen" args="load-->
+<!--          controllers/joint_state_controller-->
+<!--          controllers/robot_state_controller-->
+<!--          controllers/wheeled_bipedal_rl_controller-->
+<!--    "/>-->
+</launch>

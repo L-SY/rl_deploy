@@ -1,0 +1,30 @@
+<sdf version="1.6">
+    <model name="ramp">
+        <static>true</static>
+        <link name="link">
+            <collision name="collision">
+                <geometry>
+                    <box>
+                        <size>2 4 0.5</size>
+                    </box>
+                </geometry>
+                <pose>0.7 0 -0.1 0 -0.08 0</pose>
+            </collision>
+            <visual name="visual">
+                <geometry>
+                    <box>
+                        <size>2 4 0.5</size>
+                    </box>
+                </geometry>
+                <material>
+                    <script>
+                        <uri>file://media/materials/scripts/gazebo.material</uri>
+                        <name>Gazebo/Green</name>
+                    </script>
+                </material>
+                <pose>0.7 0 -0.1 0 -0.08 0</pose>
+            </visual>
+            <pose>0.7 0 -0.1 0 -0.08 0</pose> <!-- Rotation for ramp angle -->
+        </link>
+    </model>
+</sdf>

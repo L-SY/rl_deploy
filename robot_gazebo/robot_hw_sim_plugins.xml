@@ -1,0 +1,9 @@
+<library path="lib/librobot_hw_sim">
+    <class
+            name="robot_gazebo/RobotHWSim" type="Robot::RobotHWSim"
+            base_class_type="gazebo_ros_control::RobotHWSim">
+        <description>
+            The mobile manipulator simulation interface which constructs joint handles from an SDF/URDF.
+        </description>
+    </class>
+</library>
