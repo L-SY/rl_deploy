@@ -43,8 +43,7 @@ bool WheeledBipedalRLController::init(hardware_interface::RobotHW* robot_hw, ros
     double left_l1, left_l2, right_l1, right_l2;
     double left_centre_offset, right_centre_offset;
     vmc_nh.param("hip_bias", hipBias_, 0.);
-    vmc_nh.param("hip_bias", kneeBias_, 0.);
-    vmc_nh.param("knee_offset", useVMC_, false);
+    vmc_nh.param("knee_bias", kneeBias_, 0.);
     vmc_nh.param("gravity_feedforward", gravityFeedforward_, 50.0);
 
     vmc_nh.param("left_vmc/l1", left_l1, 0.14);
@@ -138,8 +137,8 @@ void WheeledBipedalRLController::update(const ros::Time& time, const ros::Durati
           M_PI + jointHandles_[3].getPosition() - hipBias_,jointHandles_[3].getVelocity(), jointHandles_[3].getEffort(),
           jointHandles_[4].getPosition() - M_PI - kneeBias_, jointHandles_[4].getVelocity(), jointHandles_[4].getEffort());
   }
-//  rl(time,period);
-  prostrate(time,period);
+  rl(time,period);
+//  prostrate(time,period);
   pubRLState();
 }
 
@@ -257,35 +256,41 @@ void WheeledBipedalRLController::setCommand(const ros::Duration& period)
 
     jointHandles_[2].setCommand(0);
     jointHandles_[5].setCommand(0);
-  }
-  else if (useVMC_)
-  {
-    //  data: [left_theta, left_l, left_wheel_vel, right_theta, right_l, right_wheel_vel]
-    double leftFR = VMCPids_[0].computeCommand(data[1] - leftSerialVMCPtr_->r_,period);
-    double leftFTheta = VMCPids_[1].computeCommand(data[0] - leftSerialVMCPtr_->theta_,period);
-    double rightFR = VMCPids_[2].computeCommand(data[4] - rightSerialVMCPtr_->r_,period);
-    double rightFTheta = VMCPids_[3].computeCommand(data[3] - rightSerialVMCPtr_->theta_,period);
-
-    std::vector<double> leftJointCmd = leftSerialVMCPtr_->getDesJointEff(leftSerialVMCPtr_->phi1_,leftSerialVMCPtr_->phi2_,leftFR + gravityFeedforward_, leftFTheta );
-    std::vector<double> rightJointCmd = rightSerialVMCPtr_->getDesJointEff(rightSerialVMCPtr_->phi1_,rightSerialVMCPtr_->phi2_,rightFR + gravityFeedforward_, rightFTheta );
-
-    jointHandles_[0].setCommand(leftJointCmd[0]);
-    jointHandles_[1].setCommand(leftJointCmd[1]);
-    jointHandles_[3].setCommand(rightJointCmd[0]);
-    jointHandles_[4].setCommand(rightJointCmd[1]);
-
-    jointHandles_[2].setCommand(Pids_[2].computeCommand(data[2]-jointHandles_[2].getVelocity(),period));
-    jointHandles_[5].setCommand(Pids_[5].computeCommand(data[5]-jointHandles_[5].getVelocity(),period));
+//    ROS_INFO_STREAM("empty");
   }
   else
   {
-    jointHandles_[0].setCommand(Pids_[0].computeCommand(data[0]-jointHandles_[0].getPosition(),period));
-    jointHandles_[1].setCommand(Pids_[1].computeCommand(data[1]-jointHandles_[1].getPosition(),period));
-    jointHandles_[3].setCommand(Pids_[3].computeCommand(data[3]-jointHandles_[3].getPosition(),period));
-    jointHandles_[4].setCommand(Pids_[4].computeCommand(data[4]-jointHandles_[4].getPosition(),period));
+    if (useVMC_)
+    {
+//      ROS_INFO_STREAM("rl vmc");
+      //  data: [left_theta, left_l, left_wheel_vel, right_theta, right_l, right_wheel_vel]
+      double leftFR = VMCPids_[0].computeCommand(data[1] - leftSerialVMCPtr_->r_,period);
+      double leftFTheta = VMCPids_[1].computeCommand(data[0] - leftSerialVMCPtr_->theta_,period);
+      double rightFR = VMCPids_[2].computeCommand(data[4] - rightSerialVMCPtr_->r_,period);
+      double rightFTheta = VMCPids_[3].computeCommand(data[3] - rightSerialVMCPtr_->theta_,period);
 
-    jointHandles_[2].setCommand(Pids_[2].computeCommand(data[2]-jointHandles_[2].getVelocity(),period));
-    jointHandles_[5].setCommand(Pids_[5].computeCommand(data[5]-jointHandles_[5].getVelocity(),period));
+      std::vector<double> leftJointCmd = leftSerialVMCPtr_->getDesJointEff(leftSerialVMCPtr_->phi1_,leftSerialVMCPtr_->phi2_,leftFR + gravityFeedforward_, leftFTheta );
+      std::vector<double> rightJointCmd = rightSerialVMCPtr_->getDesJointEff(rightSerialVMCPtr_->phi1_,rightSerialVMCPtr_->phi2_,rightFR + gravityFeedforward_, rightFTheta );
+
+      jointHandles_[0].setCommand(leftJointCmd[0]);
+      jointHandles_[1].setCommand(leftJointCmd[1]);
+      jointHandles_[3].setCommand(rightJointCmd[0]);
+      jointHandles_[4].setCommand(rightJointCmd[1]);
+
+      jointHandles_[2].setCommand(Pids_[2].computeCommand(data[2]-jointHandles_[2].getVelocity(),period));
+      jointHandles_[5].setCommand(Pids_[5].computeCommand(data[5]-jointHandles_[5].getVelocity(),period));
+    }
+    else
+    {
+//      ROS_INFO_STREAM("rl");
+      jointHandles_[0].setCommand(Pids_[0].computeCommand(data[0]-jointHandles_[0].getPosition(),period));
+      jointHandles_[1].setCommand(Pids_[1].computeCommand(data[1]-jointHandles_[1].getPosition(),period));
+      jointHandles_[3].setCommand(Pids_[3].computeCommand(data[3]-jointHandles_[3].getPosition(),period));
+      jointHandles_[4].setCommand(Pids_[4].computeCommand(data[4]-jointHandles_[4].getPosition(),period));
+
+      jointHandles_[2].setCommand(Pids_[2].computeCommand(data[2]-jointHandles_[2].getVelocity(),period));
+      jointHandles_[5].setCommand(Pids_[5].computeCommand(data[5]-jointHandles_[5].getVelocity(),period));
+    }
   }
 }
 
