@@ -46,9 +46,9 @@ void DiabloHW::read(const ros::Time& time, const ros::Duration& /*period*/) {
     jointData_[i].pos_ += leftJointOffset_[i];
     jointData_[i].vel_ = joint.vel / 655.34f;
     jointData_[i].tau_ = joint.torque / 655.34f;
-    jointData_[i].pos_ *= -1;
-    jointData_[i].vel_ *= -1;
-    jointData_[i].tau_ *= -1;
+    jointData_[i].pos_ *= jointDirection_[i];
+    jointData_[i].vel_ *= jointDirection_[i];
+    jointData_[i].tau_ *= jointDirection_[i];
     ++i;
   }
   int j = 0;
@@ -57,9 +57,9 @@ void DiabloHW::read(const ros::Time& time, const ros::Duration& /*period*/) {
     jointData_[i+j].pos_ += rightJointOffset_[j];
     jointData_[i+j].vel_ = joint.vel / 655.34f;
     jointData_[i+j].tau_ = joint.torque / 655.34f;
-    jointData_[i+j].pos_ *= -1;
-    jointData_[i+j].vel_ *= -1;
-    jointData_[i+j].tau_ *= -1;
+    jointData_[i+j].pos_ *= jointDirection_[j];
+    jointData_[i+j].vel_ *= jointDirection_[j];
+    jointData_[i+j].tau_ *= jointDirection_[j];
     ++j;
   }
 
@@ -78,7 +78,7 @@ void DiabloHW::read(const ros::Time& time, const ros::Duration& /*period*/) {
 void DiabloHW::write(const ros::Time& /*time*/, const ros::Duration& /*period*/) {
   float motorCmd[6] = {0., 0., 0., 0., 0., 0.0};
   for (int i = 0; i < 6; ++i) {
-    motorCmd[i] = static_cast<float>(jointData_[i].cmdTau_) * (-1.);
+    motorCmd[i] = static_cast<float>(jointData_[i].cmdTau_) * jointDirection_[i];
   }
   diabloSDK_->create_package(motorCmd,sendStruct_);
   diabloSDK_->send_commond(sendStruct_);
