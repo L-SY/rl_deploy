@@ -16,7 +16,7 @@
 #include "robot_common/interface/hardware_interface/robot_state_interface.h"
 #include "robot_common/utilities/ori_tool.h"
 #include "robot_common/utilities/tf_rt_broadcaster.h"
-
+#include "robot_common/utilities/InertialFilter.h"
 #include "geometry_msgs/Twist.h"
 
 // Gazebo
@@ -103,6 +103,9 @@ private:
   double prostrateKnee_;
 
   std::vector<LowPassFilter> actionLPFs_;
+  std::vector<InertiaFilter> actionIFs_;
+  std::vector<double> actions_;
+  std::vector<double> lastAction_;
 };
 
 }  // namespace rl_controller

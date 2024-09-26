@@ -107,12 +107,19 @@ bool WheeledBipedalRLController::init(hardware_interface::RobotHW* robot_hw, ros
 
   // init
   initStateMsg();
-  double lp_cutoff_frequency;
-  controller_nh.param("lp_cutoff_frequency", lp_cutoff_frequency, 50.);
-  for (int i = 0; i < 6; ++i) {
-    actionLPFs_.emplace_back(lp_cutoff_frequency);
-  }
+//  double lp_cutoff_frequency;
+//  controller_nh.param("lp_cutoff_frequency", lp_cutoff_frequency, 50.);
+//  for (int i = 0; i < 6; ++i) {
+//    actionLPFs_.emplace_back(lp_cutoff_frequency);
+//  }
+  actions_.resize(6);
+  lastAction_.resize(6);
 
+  double inertialAlpha;
+  controller_nh.param("inertial_alpha", inertialAlpha, 0.5);
+  for (int i = 0; i < 6; ++i) {
+    actionIFs_.emplace_back(inertialAlpha);
+  }
   geometry_msgs::Twist initTwist;
   initTwist.linear.x = 0.0;
   initTwist.linear.y = 0.0;
@@ -244,6 +251,10 @@ void WheeledBipedalRLController::pubRLState()
     robotStateMsg_.right.theta = rightSerialVMCPtr_->theta_;
     robotStateMsg_.right.theta_dot = rightSerialVMCPtr_->dtheta_;
   }
+  for (int i = 0; i < 6; ++i)
+  {
+    robotStateMsg_.actions[i] = actions_[i];
+  }
   robotStatePub_.publish(robotStateMsg_);
 }
 
@@ -251,7 +262,6 @@ void WheeledBipedalRLController::setCommand(const ros::Time& time, const ros::Du
 {
   auto rt_buffer = rlCmdRtBuffer_.readFromRT();
   auto& data = rt_buffer->data;
-
   if (data.empty())
   {
 //    jointHandles_[0].setCommand(Pids_[0].computeCommand(0-jointHandles_[0].getPosition(),period));
@@ -269,43 +279,55 @@ void WheeledBipedalRLController::setCommand(const ros::Time& time, const ros::Du
   }
   else
   {
-    for (int i = 0; i < static_cast<int>(actionLPFs_.size()); ++i)
+    if ( data != lastAction_)
     {
-        actionLPFs_[i].input(data[i],time);
-        data[i] = actionLPFs_[i].output();
+      for (int i = 0; i < static_cast<int>(actionIFs_.size()); ++i)
+      {
+        actionIFs_[i].input(data[i]);
+        actions_[i] = actionIFs_[i].output();
+        //        actions_[i] = data[i];
+      }
+    }
+    else
+    {
+      for (int i = 0; i < static_cast<int>(actionIFs_.size()); ++i)
+      {
+          actions_[i] = lastAction_[i];
+      }
     }
     if (useVMC_)
     {
 //      ROS_INFO_STREAM("rl vmc");
       //  data: [left_theta, left_l, left_wheel_vel, right_theta, right_l, right_wheel_vel]
-      double leftFR = VMCPids_[0].computeCommand(data[1] - leftSerialVMCPtr_->r_,period);
-      double leftFTheta = VMCPids_[1].computeCommand(data[0] - leftSerialVMCPtr_->theta_,period);
-      double rightFR = VMCPids_[2].computeCommand(data[4] - rightSerialVMCPtr_->r_,period);
-      double rightFTheta = VMCPids_[3].computeCommand(data[3] - rightSerialVMCPtr_->theta_,period);
+      double leftFR = VMCPids_[0].computeCommand(actions_[1] - leftSerialVMCPtr_->r_,period);
+      double leftFTheta = VMCPids_[1].computeCommand(actions_[0] - leftSerialVMCPtr_->theta_,period);
+      double rightFR = VMCPids_[2].computeCommand(actions_[4] - rightSerialVMCPtr_->r_,period);
+      double rightFTheta = VMCPids_[3].computeCommand(actions_[3] - rightSerialVMCPtr_->theta_,period);
 
-      std::vector<double> leftJointCmd = leftSerialVMCPtr_->getDesJointEff(leftSerialVMCPtr_->phi1_,leftSerialVMCPtr_->phi2_,leftFR + gravityFeedforward_, leftFTheta );
-      std::vector<double> rightJointCmd = rightSerialVMCPtr_->getDesJointEff(rightSerialVMCPtr_->phi1_,rightSerialVMCPtr_->phi2_,rightFR + gravityFeedforward_, rightFTheta );
+      std::vector<double> leftJointCmd = leftSerialVMCPtr_->getDesJointEff(leftSerialVMCPtr_->phi1_,leftSerialVMCPtr_->phi2_,leftFR + gravityFeedforward_* cos(leftSerialVMCPtr_->theta_), leftFTheta - gravityFeedforward_* sin(leftSerialVMCPtr_->theta_));
+      std::vector<double> rightJointCmd = rightSerialVMCPtr_->getDesJointEff(rightSerialVMCPtr_->phi1_,rightSerialVMCPtr_->phi2_,rightFR + gravityFeedforward_* cos(rightSerialVMCPtr_->theta_), rightFTheta - gravityFeedforward_* sin(rightSerialVMCPtr_->theta_));
 
       jointHandles_[0].setCommand(leftJointCmd[0]);
       jointHandles_[1].setCommand(leftJointCmd[1]);
       jointHandles_[3].setCommand(rightJointCmd[0]);
       jointHandles_[4].setCommand(rightJointCmd[1]);
 
-      jointHandles_[2].setCommand(Pids_[2].computeCommand(data[2]-jointHandles_[2].getVelocity(),period));
-      jointHandles_[5].setCommand(Pids_[5].computeCommand(data[5]-jointHandles_[5].getVelocity(),period));
+      jointHandles_[2].setCommand(Pids_[2].computeCommand(actions_[2]-jointHandles_[2].getVelocity(),period));
+      jointHandles_[5].setCommand(Pids_[5].computeCommand(actions_[5]-jointHandles_[5].getVelocity(),period));
     }
     else
     {
 //      ROS_INFO_STREAM("rl");
-      jointHandles_[0].setCommand(Pids_[0].computeCommand(data[0]-jointHandles_[0].getPosition(),period));
-      jointHandles_[1].setCommand(Pids_[1].computeCommand(data[1]-jointHandles_[1].getPosition(),period));
-      jointHandles_[3].setCommand(Pids_[3].computeCommand(data[3]-jointHandles_[3].getPosition(),period));
-      jointHandles_[4].setCommand(Pids_[4].computeCommand(data[4]-jointHandles_[4].getPosition(),period));
+      jointHandles_[0].setCommand(Pids_[0].computeCommand(actions_[0]-jointHandles_[0].getPosition(),period));
+      jointHandles_[1].setCommand(Pids_[1].computeCommand(actions_[1]-jointHandles_[1].getPosition(),period));
+      jointHandles_[3].setCommand(Pids_[3].computeCommand(actions_[3]-jointHandles_[3].getPosition(),period));
+      jointHandles_[4].setCommand(Pids_[4].computeCommand(actions_[4]-jointHandles_[4].getPosition(),period));
 
-      jointHandles_[2].setCommand(Pids_[2].computeCommand(data[2]-jointHandles_[2].getVelocity(),period));
-      jointHandles_[5].setCommand(Pids_[5].computeCommand(data[5]-jointHandles_[5].getVelocity(),period));
+      jointHandles_[2].setCommand(Pids_[2].computeCommand(actions_[2]-jointHandles_[2].getVelocity(),period));
+      jointHandles_[5].setCommand(Pids_[5].computeCommand(actions_[5]-jointHandles_[5].getVelocity(),period));
     }
   }
+  lastAction_ = rt_buffer->data;
 }
 
 void WheeledBipedalRLController::initStateMsg()
@@ -346,6 +368,11 @@ void WheeledBipedalRLController::initStateMsg()
     robotStateMsg_.right.l_dot = 0.0;
     robotStateMsg_.right.theta = 0.0;
     robotStateMsg_.right.theta_dot = 0.0;
+  }
+  robotStateMsg_.actions.resize(6);
+  for (double & action : robotStateMsg_.actions)
+  {
+      action = 0.;
   }
 }
 
