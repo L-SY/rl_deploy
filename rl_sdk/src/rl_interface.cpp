@@ -119,6 +119,11 @@ private:
     control.vel_x = msg.commands[0];
     control.vel_yaw = msg.commands[1];
     control.pos_z = msg.commands[2];
+
+//    for(int i = 0; i < params.num_of_dofs; ++i)
+//    {
+//      robot_state.actions[i] = msg.actions[i];
+//    }
   }
 };
 

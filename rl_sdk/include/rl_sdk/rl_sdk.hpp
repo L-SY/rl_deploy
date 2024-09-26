@@ -44,6 +44,8 @@ struct RobotState
       std::vector<T> l = {0.0, 0.0};
       std::vector<T> dl = {0.0, 0.0};
     } vmc;
+
+    std::vector<T> actions = std::vector<T>(6, 0.0);
 };
 
 struct Control

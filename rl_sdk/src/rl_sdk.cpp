@@ -360,6 +360,7 @@ void rl_sdk::SetObservation()
   obs.base_quat = torch::tensor(robot_state.imu.quaternion).unsqueeze(0);
   obs.dof_pos = torch::tensor(robot_state.motor_state.q).narrow(0, 0, params.num_of_dofs).unsqueeze(0);
   obs.dof_vel = torch::tensor(robot_state.motor_state.dq).narrow(0, 0, params.num_of_dofs).unsqueeze(0);
+//  obs.actions = torch::tensor(robot_state.actions).narrow(0, 0, params.num_of_dofs).unsqueeze(0);
 
   //  [theta , theta_dot, l, l_dot]
   auto theta_tensor = torch::tensor(robot_state.vmc.theta).narrow(0, 0, params.num_of_vmc / 4).unsqueeze(0);
