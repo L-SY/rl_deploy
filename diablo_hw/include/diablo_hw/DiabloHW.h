@@ -97,6 +97,7 @@ private:
   std::shared_ptr<SerialHandle> diabloSDK_;
   motor_torque_t sendStruct_;
 
+  bool init_ = false;
   DiabloImuData imuData_{};
   DiabloMotorData jointData_[8]{};
   std::vector<LowPassFilter> velLPFs_;

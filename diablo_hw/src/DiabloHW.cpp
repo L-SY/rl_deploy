@@ -47,6 +47,12 @@ void DiabloHW::read(const ros::Time& time, const ros::Duration& /*period*/) {
   auto diabloInfo = diabloSDK_->rec_package;
   auto leftJoints = {diabloInfo->left_hip, diabloInfo->left_knee, diabloInfo->left_wheel};
   auto rightJoints = {diabloInfo->right_hip, diabloInfo->right_knee, diabloInfo->right_wheel};
+  if (!init_)
+  {
+    leftJointOffset_[2] = -leftJoints.end()->pos / 5215.03f;
+    rightJointOffset_[2] = -rightJoints.end()->pos / 5215.03f;
+    init_ = true;
+  }
   int i = 0;
   for (const auto& joint : leftJoints) {
     jointData_[i].pos_ = joint.pos / 5215.03f;
