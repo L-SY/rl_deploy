@@ -114,12 +114,17 @@ bool WheeledBipedalRLController::init(hardware_interface::RobotHW* robot_hw, ros
 //  }
   actions_.resize(6);
   lastAction_.resize(6);
-
-  double inertialAlpha;
-  controller_nh.param("inertial_alpha", inertialAlpha, 0.5);
-  for (int i = 0; i < 6; ++i) {
-    actionIFs_.emplace_back(inertialAlpha);
-  }
+//  double inertialAlpha;
+//  controller_nh.param("inertial_alpha", inertialAlpha, 0.5);
+//  for (int i = 0; i < 6; ++i) {
+//    actionIFs_.emplace_back(inertialAlpha);
+//  }
+//  int windowSize;
+//  controller_nh.param("window_size", windowSize, 2);
+//  for (int i = 0; i < 6; ++i) {
+//    actionMFs_.emplace_back(windowSize);
+//    actionMFs_[i].reset();
+//  }
   geometry_msgs::Twist initTwist;
   initTwist.linear.x = 0.0;
   initTwist.linear.y = 0.0;
@@ -279,22 +284,24 @@ void WheeledBipedalRLController::setCommand(const ros::Time& time, const ros::Du
   }
   else
   {
-    if ( data != lastAction_)
-    {
-      for (int i = 0; i < static_cast<int>(actionIFs_.size()); ++i)
+//    if ( data == lastAction_)
+//    {
+//      for (int i = 0; i < static_cast<int>(actionMFs_.size()); ++i)
+//      {
+//        actions_[i] = data[i];
+//      }
+//      ROS_INFO_STREAM("111111111111111");
+//    }
+//    else
+//    {
+      for (int i = 0; i < static_cast<int>(data.size()); ++i)
       {
-        actionIFs_[i].input(data[i]);
-        actions_[i] = actionIFs_[i].output();
-        //        actions_[i] = data[i];
+//        actionMFs_[i].input(data[i]);
+//        actions_[i] = actionMFs_[i].output();
+          actions_[i] = data[i];
       }
-    }
-    else
-    {
-      for (int i = 0; i < static_cast<int>(actionIFs_.size()); ++i)
-      {
-          actions_[i] = lastAction_[i];
-      }
-    }
+//      ROS_INFO_STREAM("~~~~~~~~~~~~~");
+//    }
     if (useVMC_)
     {
 //      ROS_INFO_STREAM("rl vmc");
@@ -327,7 +334,7 @@ void WheeledBipedalRLController::setCommand(const ros::Time& time, const ros::Du
       jointHandles_[5].setCommand(Pids_[5].computeCommand(actions_[5]-jointHandles_[5].getVelocity(),period));
     }
   }
-  lastAction_ = rt_buffer->data;
+  lastAction_ = data;
 }
 
 void WheeledBipedalRLController::initStateMsg()

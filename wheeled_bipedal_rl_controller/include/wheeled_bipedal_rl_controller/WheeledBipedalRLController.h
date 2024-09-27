@@ -17,6 +17,7 @@
 #include "robot_common/utilities/ori_tool.h"
 #include "robot_common/utilities/tf_rt_broadcaster.h"
 #include "robot_common/utilities/InertialFilter.h"
+#include "robot_common/utilities/MeanFilter.h"
 #include "geometry_msgs/Twist.h"
 
 // Gazebo
@@ -104,6 +105,7 @@ private:
 
   std::vector<LowPassFilter> actionLPFs_;
   std::vector<InertiaFilter> actionIFs_;
+  std::vector<MeanFilter> actionMFs_;
   std::vector<double> actions_;
   std::vector<double> lastAction_;
 };
