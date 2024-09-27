@@ -269,14 +269,14 @@ void WheeledBipedalRLController::setCommand(const ros::Time& time, const ros::Du
   auto& data = rt_buffer->data;
   if (data.empty())
   {
-//    jointHandles_[0].setCommand(Pids_[0].computeCommand(0-jointHandles_[0].getPosition(),period));
-//    jointHandles_[1].setCommand(Pids_[1].computeCommand(0-jointHandles_[1].getPosition(),period));
-//    jointHandles_[3].setCommand(Pids_[3].computeCommand(0-jointHandles_[3].getPosition(),period));
-//    jointHandles_[4].setCommand(Pids_[4].computeCommand(0-jointHandles_[4].getPosition(),period));
-    jointHandles_[0].setCommand(0);
-    jointHandles_[1].setCommand(0);
-    jointHandles_[3].setCommand(0);
-    jointHandles_[4].setCommand(0);
+    jointHandles_[0].setCommand(Pids_[0].computeCommand(0-jointHandles_[0].getPosition(),period));
+    jointHandles_[1].setCommand(Pids_[1].computeCommand(0-jointHandles_[1].getPosition(),period));
+    jointHandles_[3].setCommand(Pids_[3].computeCommand(0-jointHandles_[3].getPosition(),period));
+    jointHandles_[4].setCommand(Pids_[4].computeCommand(0-jointHandles_[4].getPosition(),period));
+//    jointHandles_[0].setCommand(0);
+//    jointHandles_[1].setCommand(0);
+//    jointHandles_[3].setCommand(0);
+//    jointHandles_[4].setCommand(0);
 
     jointHandles_[2].setCommand(0);
     jointHandles_[5].setCommand(0);
