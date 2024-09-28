@@ -203,15 +203,15 @@ void WheeledBipedalRLController::pubRLState()
   robotStateMsg_.imu_states.orientation.w = imuSensorHandle_.getOrientation()[3];
 
 //  For test imu
-//  geometry_msgs::Quaternion base;
-//  double roll, pitch, yaw;
-//  base.x = imuSensorHandle_.getOrientation()[0];
-//  base.y = imuSensorHandle_.getOrientation()[1];
-//  base.z = imuSensorHandle_.getOrientation()[2];
-//  base.w = imuSensorHandle_.getOrientation()[3];
-//  robot_common::quatToRPY(base,roll,pitch,yaw);
+  geometry_msgs::Quaternion base;
+  double roll, yaw;
+  base.x = imuSensorHandle_.getOrientation()[0];
+  base.y = imuSensorHandle_.getOrientation()[1];
+  base.z = imuSensorHandle_.getOrientation()[2];
+  base.w = imuSensorHandle_.getOrientation()[3];
+  robot_common::quatToRPY(base,roll,basePitch_,yaw);
 //  ROS_INFO_STREAM("Roll==" << roll);
-//  ROS_INFO_STREAM("Pitch==" << pitch);
+//  ROS_INFO_STREAM("Pitch==" << basePitch_);
 //  ROS_INFO_STREAM("Yaw==" << yaw);
 
   robotStateMsg_.imu_states.angular_velocity.x = imuSensorHandle_.getAngularVelocity()[0];

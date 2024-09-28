@@ -103,6 +103,7 @@ private:
   double prostrateHip_;
   double prostrateKnee_;
 
+  double basePitch_;
   std::vector<LowPassFilter> actionLPFs_;
   std::vector<InertiaFilter> actionIFs_;
   std::vector<MeanFilter> actionMFs_;
