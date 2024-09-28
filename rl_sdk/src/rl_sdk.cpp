@@ -68,6 +68,9 @@ torch::Tensor rl_sdk::ComputeObservation()
     {
       if (observation == "dof_pos")
       {
+//      Let wheel pos to zero
+        obs.dof_pos[0][2] = 0.;
+        obs.dof_pos[0][5] = 0.;
         obs_list.push_back((obs.dof_pos - params.default_dof_pos) * params.dof_pos_scale);
       }
       else if (observation == "dof_vel")
