@@ -34,10 +34,13 @@ bool WheeledBipedalRLController::init(hardware_interface::RobotHW* robot_hw, ros
   prostrate_nh.param("hip", prostrateHip_, 0.);
   prostrate_nh.param("knee", prostrateKnee_, 0.);
 
+  // gravity_ff
+  controller_nh.param("add_gravity_ff", addGravityFF_, false);
+
   // vmc
   ros::NodeHandle vmc_nh(controller_nh, "vmc");
   vmc_nh.param("use_vmc", useVMC_, false);
-  if (useVMC_)
+  if (useVMC_ || addGravityFF_)
   {
     std::string left_type, right_type;
     double left_l1, left_l2, right_l1, right_l2;
@@ -59,37 +62,30 @@ bool WheeledBipedalRLController::init(hardware_interface::RobotHW* robot_hw, ros
     ros::NodeHandle vmc_right_nh(controller_nh, std::string("vmc_left"));
     leftSerialVMCPtr_ = std::make_shared<vmc::SerialVMC>(left_l1,left_l2, vmc_left_nh);
     rightSerialVMCPtr_ = std::make_shared<vmc::SerialVMC>(right_l1,right_l2, vmc_right_nh);
-
-    VMCPids_.resize(4);
-    std::vector<std::string> VMCNames = {"left_r", "left_theta", "right_r", "right_theta"};
-    for (size_t i = 0; i < 4; ++i)
+    if (useVMC_)
     {
-      ros::NodeHandle vmc_pid_nh(vmc_nh, std::string("gains/") + VMCNames[i]);
-      VMCPids_[i].reset();
-      if (!VMCPids_[i].init(vmc_pid_nh))
+      VMCPids_.resize(4);
+      std::vector<std::string> VMCNames = {"left_r", "left_theta", "right_r", "right_theta"};
+      for (size_t i = 0; i < 4; ++i)
       {
-        ROS_WARN_STREAM("Failed to initialize VMC PID gains from ROS parameter server.");
-        return false;
+        ros::NodeHandle vmc_pid_nh(vmc_nh, std::string("gains/") + VMCNames[i]);
+        VMCPids_[i].reset();
+        if (!VMCPids_[i].init(vmc_pid_nh))
+        {
+          ROS_WARN_STREAM("Failed to initialize VMC PID gains from ROS parameter server.");
+          return false;
+        }
       }
     }
-    auto* effortJointInterface = robot_hw->get<hardware_interface::EffortJointInterface>();
-    jointHandles_.push_back(effortJointInterface->getHandle("left_fake_hip_joint"));
-    jointHandles_.push_back(effortJointInterface->getHandle("left_hip_joint"));
-    jointHandles_.push_back(effortJointInterface->getHandle("left_wheel_joint"));
-    jointHandles_.push_back(effortJointInterface->getHandle("right_fake_hip_joint"));
-    jointHandles_.push_back(effortJointInterface->getHandle("right_hip_joint"));
-    jointHandles_.push_back(effortJointInterface->getHandle("right_wheel_joint"));
   }
-  else
-  {
-    auto* effortJointInterface = robot_hw->get<hardware_interface::EffortJointInterface>();
-    jointHandles_.push_back(effortJointInterface->getHandle("left_fake_hip_joint"));
-    jointHandles_.push_back(effortJointInterface->getHandle("left_hip_joint"));
-    jointHandles_.push_back(effortJointInterface->getHandle("left_wheel_joint"));
-    jointHandles_.push_back(effortJointInterface->getHandle("right_fake_hip_joint"));
-    jointHandles_.push_back(effortJointInterface->getHandle("right_hip_joint"));
-    jointHandles_.push_back(effortJointInterface->getHandle("right_wheel_joint"));
-  }
+
+  auto* effortJointInterface = robot_hw->get<hardware_interface::EffortJointInterface>();
+  jointHandles_.push_back(effortJointInterface->getHandle("left_fake_hip_joint"));
+  jointHandles_.push_back(effortJointInterface->getHandle("left_hip_joint"));
+  jointHandles_.push_back(effortJointInterface->getHandle("left_wheel_joint"));
+  jointHandles_.push_back(effortJointInterface->getHandle("right_fake_hip_joint"));
+  jointHandles_.push_back(effortJointInterface->getHandle("right_hip_joint"));
+  jointHandles_.push_back(effortJointInterface->getHandle("right_wheel_joint"));
 
   // Low-level-controller
   Pids_.resize(jointHandles_.size());
@@ -144,7 +140,7 @@ void WheeledBipedalRLController::starting(const ros::Time& /*unused*/)
 
 void WheeledBipedalRLController::update(const ros::Time& time, const ros::Duration& period)
 {
-  if (useVMC_)
+  if (useVMC_ || addGravityFF_)
   {
       // change for diablo urdf
       leftSerialVMCPtr_->update(
@@ -338,11 +334,17 @@ void WheeledBipedalRLController::setCommand(const ros::Time& time, const ros::Du
     }
     else
     {
-//      ROS_INFO_STREAM("rl");
-      jointHandles_[0].setCommand(Pids_[0].computeCommand(actions_[0]-jointHandles_[0].getPosition(),period));
-      jointHandles_[1].setCommand(Pids_[1].computeCommand(actions_[1]-jointHandles_[1].getPosition(),period));
-      jointHandles_[3].setCommand(Pids_[3].computeCommand(actions_[3]-jointHandles_[3].getPosition(),period));
-      jointHandles_[4].setCommand(Pids_[4].computeCommand(actions_[4]-jointHandles_[4].getPosition(),period));
+      std::vector<double> leftJointCmd = {0., 0.};
+      std::vector<double> rightJointCmd = {0., 0.};
+      if (addGravityFF_)
+      {
+        leftJointCmd = leftSerialVMCPtr_->getDesJointEff(leftSerialVMCPtr_->phi1_,leftSerialVMCPtr_->phi2_,gravityFeedforward_, 0.);
+        rightJointCmd = rightSerialVMCPtr_->getDesJointEff(rightSerialVMCPtr_->phi1_,rightSerialVMCPtr_->phi2_,gravityFeedforward_, 0.);
+      }
+      jointHandles_[0].setCommand(Pids_[0].computeCommand(actions_[0]-jointHandles_[0].getPosition(),period) + leftJointCmd[0]);
+      jointHandles_[1].setCommand(Pids_[1].computeCommand(actions_[1]-jointHandles_[1].getPosition(),period) + leftJointCmd[1]);
+      jointHandles_[3].setCommand(Pids_[3].computeCommand(actions_[3]-jointHandles_[3].getPosition(),period) + rightJointCmd[0]);
+      jointHandles_[4].setCommand(Pids_[4].computeCommand(actions_[4]-jointHandles_[4].getPosition(),period) + rightJointCmd[1]);
 
       jointHandles_[2].setCommand(Pids_[2].computeCommand(actions_[2]-jointHandles_[2].getVelocity(),period));
       jointHandles_[5].setCommand(Pids_[5].computeCommand(actions_[5]-jointHandles_[5].getVelocity(),period));

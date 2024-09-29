@@ -93,7 +93,7 @@ private:
   realtime_tools::RealtimeBuffer<std_msgs::Float64MultiArray> rlCmdRtBuffer_{};
 
   // vmc
-  bool useVMC_;
+  bool useVMC_, addGravityFF_;
   double gravityFeedforward_, hipBias_, kneeBias_;
   std::shared_ptr<vmc::SerialVMC> leftSerialVMCPtr_;
   std::shared_ptr<vmc::SerialVMC> rightSerialVMCPtr_;
