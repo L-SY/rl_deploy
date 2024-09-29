@@ -23,9 +23,11 @@ bool DiabloHW::init(ros::NodeHandle& root_nh, ros::NodeHandle& robot_hw_nh) {
 
   double lp_cutoff_frequency;
   robot_hw_nh.param("lp_cutoff_frequency", lp_cutoff_frequency, 50.);
-  robot_hw_nh.param("use_filter", useFilter_, false);
+  robot_hw_nh.param("use_filter", useFilter_, true);
   for (int i = 0; i < 6; ++i) {
     velLPFs_.emplace_back(lp_cutoff_frequency);
+    posLPFs_.emplace_back(lp_cutoff_frequency);
+    tauLPFs_.emplace_back(lp_cutoff_frequency);
   }
 
   double max_acc;
@@ -52,7 +54,7 @@ bool DiabloHW::loadUrdf(ros::NodeHandle& rootNh) {
 }
 
 void DiabloHW::read(const ros::Time& time, const ros::Duration& period) {
-  std::lock_guard<std::mutex> lock(diabloSDK_->buffer_mutex);
+//  std::lock_guard<std::mutex> lock(diabloSDK_->buffer_mutex);
   auto diabloInfo = diabloSDK_->rec_package;
   auto leftJoints = {diabloInfo->left_hip, diabloInfo->left_knee, diabloInfo->left_wheel};
   auto rightJoints = {diabloInfo->right_hip, diabloInfo->right_knee, diabloInfo->right_wheel};
@@ -66,13 +68,22 @@ void DiabloHW::read(const ros::Time& time, const ros::Duration& period) {
   for (const auto& joint : leftJoints) {
     if (useFilter_)
     {
-      posVFs_[i].input(joint.pos / 5215.03f, period.toSec());
-      velVFs_[i].input(joint.vel / 655.34f, period.toSec());
-      tauVFs_[i].input( joint.torque / 655.34f, period.toSec());
+//      posVFs_[i].input(joint.pos / 5215.03f, period.toSec());
+//      velVFs_[i].input(joint.vel / 655.34f, period.toSec());
+//      tauVFs_[i].input( joint.torque / 655.34f, period.toSec());
+//
+//      jointData_[i].pos_ = posVFs_[i].output();
+//      jointData_[i].vel_ = velVFs_[i].output();
+//      jointData_[i].tau_ = tauVFs_[i].output();
 
-      jointData_[i].pos_ = posVFs_[i].output();
-      jointData_[i].vel_ = velVFs_[i].output();
-      jointData_[i].tau_ = tauVFs_[i].output();
+      posLPFs_[i].input(joint.pos / 5215.03f);
+      velLPFs_[i].input(joint.vel / 655.34f);
+      tauLPFs_[i].input( joint.torque / 655.34f);
+
+      jointData_[i].pos_ = posLPFs_[i].output();
+      jointData_[i].vel_ = velLPFs_[i].output();
+      jointData_[i].tau_ = tauLPFs_[i].output();
+
     }
     else
     {
@@ -92,12 +103,21 @@ void DiabloHW::read(const ros::Time& time, const ros::Duration& period) {
     jointData_[i+j].pos_ += rightJointOffset_[j];
     if (useFilter_)
     {
-      velVFs_[i+j].input(joint.vel / 655.34f, period.toSec());
-      jointData_[i+j].vel_ = velVFs_[i].output();
+      posLPFs_[i+j].input(joint.pos / 5215.03f);
+      velLPFs_[i+j].input(joint.vel / 655.34f);
+      tauLPFs_[i+j].input( joint.torque / 655.34f);
+
+      jointData_[i+j].pos_ = posLPFs_[i+j].output();
+      jointData_[i+j].vel_ = velLPFs_[i+j].output();
+      jointData_[i+j].tau_ = tauLPFs_[i+j].output();
     }
     else
+    {
+      jointData_[i+j].pos_ = joint.pos / 5215.03f;
       jointData_[i+j].vel_ = joint.vel / 655.34f;
-    jointData_[i+j].tau_ = joint.torque / 655.34f;
+      jointData_[i+j].tau_ = joint.torque / 655.34f;
+    }
+    jointData_[i+j].pos_ += rightJointOffset_[j];
     jointData_[i+j].pos_ *= jointDirection_[j];
     jointData_[i+j].vel_ *= jointDirection_[j];
     jointData_[i+j].tau_ *= jointDirection_[j];

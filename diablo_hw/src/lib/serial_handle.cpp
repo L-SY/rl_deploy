@@ -23,7 +23,9 @@ uint32_t frame_in_cnt = 0;
 uint8_t receive_test = 0;
 void SerialHandle::serial_recive(void){
     uint32_t byte_micro = 1000000 * 10/460800;
+
     while(rec_loop){
+        uint8_t  test_rec_buffer[100];
         int start = -1;
         while(start != 0xAA){  //header AA
             start = mySerial.ReadChar();
@@ -31,52 +33,34 @@ void SerialHandle::serial_recive(void){
                 std::cerr<<"Serial receive timeout occured 1!"<<std::endl;
             }
         }
-        rec_buffer[0] = 0xAA;  
+        test_rec_buffer[0] = 0xAA;
         usleep(byte_micro * sizeof(uart_packet_t));
         while((int)mySerial.Available() < (int)sizeof(uart_packet_t) - 1) 
         {
             usleep(byte_micro);
         }
-        for(uint16_t i = 1; i < sizeof(uart_packet_t); i++)
-        {
-            std::lock_guard<std::mutex> lock(buffer_mutex);
-            int result = mySerial.ReadChar();
-            if(result == -1){
-                std::cerr<<"Serial receive timeout occured 2!"<<std::endl;
-		        continue;
-            }
-            rec_buffer[i] = result;
+
+        for (uint16_t i = 1; i < sizeof(uart_packet_t); i++) {
+          int result = mySerial.ReadChar();
+          if (result == -1) {
+            std::cerr << "Serial receive timeout occured 2!" << std::endl;
+            continue;
+          }
+          test_rec_buffer[i] = result;
         }
-        if(rec_buffer[1] != 0xBB) continue; //header double check.
-        
-        if(receive_test == 0)
-        {
-            for(uint8_t i = 0;i< sizeof(uart_packet_t);i++)
-            {
-//                std::cout << dec << (uint32_t)rec_buffer[i] << "\t"  << dec << (uint32_t)i<< std::endl;
-            }
-            receive_test = 1;
+
+        if (test_rec_buffer[1] != 0xBB) {
+          std::cout << "receive error!!!!!!" << std::endl;
+          std::cout << ((uart_packet_t*)(rec_buffer))->left_knee.pos / 5215.03f<< std::endl;
+          continue; // header double check.
         }
-        // Decode the packet and print in here
-        if(JOINT_CTRL::verify_crc16(rec_buffer,sizeof(uart_packet_t)))
-        {
-//            std::cout<<  "Accl :\t "
-//            << ((uart_packet_t*)(rec_buffer.get()))->accl.x / 1638.5f<< "\t\t"
-//            << ((uart_packet_t*)(rec_buffer.get()))->accl.y / 1638.5f<< "\t\t"
-//            << ((uart_packet_t*)(rec_buffer.get()))->accl.z / 1638.5f << "\r\n"
-//            << std::endl;
-//            std::cout<<  "Gyro :\t "
-//            << ((uart_packet_t*)(rec_buffer.get()))->gyro.x / 327.67f<< "\t\t"
-//            << ((uart_packet_t*)(rec_buffer.get()))->gyro.y / 327.67f<< "\t\t"
-//            << ((uart_packet_t*)(rec_buffer.get()))->gyro.z / 327.67f << "\r\n"
-//            << std::endl;
-//            std::cout<<  "Quat :\t "
-//            << ((uart_packet_t*)(rec_buffer.get()))->orientation.w / 32767.f<< "\t\t"
-//            << ((uart_packet_t*)(rec_buffer.get()))->orientation.x / 32767.f<< "\t\t"
-//            << ((uart_packet_t*)(rec_buffer.get()))->orientation.y / 32767.f<< "\t\t"
-//            << ((uart_packet_t*)(rec_buffer.get()))->orientation.z / 32767.f << "\r\n"
-//            << std::endl;
+
+        if (!JOINT_CTRL::verify_crc16(test_rec_buffer, sizeof(uart_packet_t))) {
+          std::cout << "crc error!!!!!!" << std::endl;
+          std::cout << ((uart_packet_t*)(rec_buffer))->left_knee.pos / 5215.03f<< std::endl;
+          continue;
         }
+        memcpy(rec_buffer, test_rec_buffer, sizeof(test_rec_buffer));
     }
 }
 

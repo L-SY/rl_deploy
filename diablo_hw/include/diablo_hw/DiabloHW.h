@@ -102,10 +102,8 @@ private:
   bool useFilter_ = false;
   DiabloImuData imuData_{};
   DiabloMotorData jointData_[8]{};
-  std::vector<LowPassFilter> velLPFs_;
-  std::vector<VelocityFilter> velVFs_;
-  std::vector<VelocityFilter> posVFs_;
-  std::vector<VelocityFilter> tauVFs_;
+  std::vector<LowPassFilter> velLPFs_, posLPFs_, tauLPFs_;
+  std::vector<VelocityFilter> velVFs_, posVFs_, tauVFs_;
   std::vector<double> leftJointOffset_ = { -1.12 + 2 * M_PI, -2.8 + 2 * M_PI, 0.};
   std::vector<double> rightJointOffset_ = { -1.12, -2.8, 0.};
   std::vector<double> jointDirection_ = { -1., -1., 1., -1., -1., 1. };
