@@ -83,11 +83,11 @@ bool WheeledBipedalRLController::init(hardware_interface::RobotHW* robot_hw, ros
   else
   {
     auto* effortJointInterface = robot_hw->get<hardware_interface::EffortJointInterface>();
+    jointHandles_.push_back(effortJointInterface->getHandle("left_fake_hip_joint"));
     jointHandles_.push_back(effortJointInterface->getHandle("left_hip_joint"));
-    jointHandles_.push_back(effortJointInterface->getHandle("left_knee_joint"));
     jointHandles_.push_back(effortJointInterface->getHandle("left_wheel_joint"));
+    jointHandles_.push_back(effortJointInterface->getHandle("right_fake_hip_joint"));
     jointHandles_.push_back(effortJointInterface->getHandle("right_hip_joint"));
-    jointHandles_.push_back(effortJointInterface->getHandle("right_knee_joint"));
     jointHandles_.push_back(effortJointInterface->getHandle("right_wheel_joint"));
   }
 
@@ -213,6 +213,9 @@ void WheeledBipedalRLController::pubRLState()
 //  ROS_INFO_STREAM("Roll==" << roll);
 //  ROS_INFO_STREAM("Pitch==" << basePitch_);
 //  ROS_INFO_STREAM("Yaw==" << yaw);
+  robotStateMsg_.rpy[0] = roll;
+  robotStateMsg_.rpy[1] = basePitch_;
+  robotStateMsg_.rpy[2] = yaw;
 
   robotStateMsg_.imu_states.angular_velocity.x = imuSensorHandle_.getAngularVelocity()[0];
   robotStateMsg_.imu_states.angular_velocity.y = imuSensorHandle_.getAngularVelocity()[1];
@@ -269,14 +272,14 @@ void WheeledBipedalRLController::setCommand(const ros::Time& time, const ros::Du
   auto& data = rt_buffer->data;
   if (data.empty())
   {
-    jointHandles_[0].setCommand(Pids_[0].computeCommand(0-jointHandles_[0].getPosition(),period));
-    jointHandles_[1].setCommand(Pids_[1].computeCommand(0-jointHandles_[1].getPosition(),period));
-    jointHandles_[3].setCommand(Pids_[3].computeCommand(0-jointHandles_[3].getPosition(),period));
-    jointHandles_[4].setCommand(Pids_[4].computeCommand(0-jointHandles_[4].getPosition(),period));
-//    jointHandles_[0].setCommand(0);
-//    jointHandles_[1].setCommand(0);
-//    jointHandles_[3].setCommand(0);
-//    jointHandles_[4].setCommand(0);
+//    jointHandles_[0].setCommand(Pids_[0].computeCommand(0-jointHandles_[0].getPosition(),period));
+//    jointHandles_[1].setCommand(Pids_[1].computeCommand(0-jointHandles_[1].getPosition(),period));
+//    jointHandles_[3].setCommand(Pids_[3].computeCommand(0-jointHandles_[3].getPosition(),period));
+//    jointHandles_[4].setCommand(Pids_[4].computeCommand(0-jointHandles_[4].getPosition(),period));
+    jointHandles_[0].setCommand(0);
+    jointHandles_[1].setCommand(0);
+    jointHandles_[3].setCommand(0);
+    jointHandles_[4].setCommand(0);
 
     jointHandles_[2].setCommand(0);
     jointHandles_[5].setCommand(0);
@@ -376,6 +379,11 @@ void WheeledBipedalRLController::initStateMsg()
     robotStateMsg_.right.theta = 0.0;
     robotStateMsg_.right.theta_dot = 0.0;
   }
+
+  robotStateMsg_.rpy.resize(3);
+  robotStateMsg_.rpy[0] = 0;
+  robotStateMsg_.rpy[1] = 0;
+  robotStateMsg_.rpy[2] = 0;
   robotStateMsg_.actions.resize(6);
   for (double & action : robotStateMsg_.actions)
   {
