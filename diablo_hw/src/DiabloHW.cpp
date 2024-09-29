@@ -23,9 +23,15 @@ bool DiabloHW::init(ros::NodeHandle& root_nh, ros::NodeHandle& robot_hw_nh) {
 
   double lp_cutoff_frequency;
   robot_hw_nh.param("lp_cutoff_frequency", lp_cutoff_frequency, 50.);
-  ROS_INFO_STREAM(lp_cutoff_frequency);
+  robot_hw_nh.param("use_filter", useFilter_, false);
   for (int i = 0; i < 6; ++i) {
     velLPFs_.emplace_back(lp_cutoff_frequency);
+  }
+
+  double max_acc;
+  robot_hw_nh.param("max_acc", max_acc, 50.);
+  for (int i = 0; i < 6; ++i) {
+    velVFs_.emplace_back(max_acc);
   }
 
   diabloSDK_->start_joint_sdk();
@@ -43,7 +49,7 @@ bool DiabloHW::loadUrdf(ros::NodeHandle& rootNh) {
   return !urdfString.empty() && urdfModel_->initString(urdfString);
 }
 
-void DiabloHW::read(const ros::Time& time, const ros::Duration& /*period*/) {
+void DiabloHW::read(const ros::Time& time, const ros::Duration& period) {
   std::lock_guard<std::mutex> lock(diabloSDK_->buffer_mutex);
   auto diabloInfo = diabloSDK_->rec_package;
   auto leftJoints = {diabloInfo->left_hip, diabloInfo->left_knee, diabloInfo->left_wheel};
@@ -58,8 +64,13 @@ void DiabloHW::read(const ros::Time& time, const ros::Duration& /*period*/) {
   for (const auto& joint : leftJoints) {
     jointData_[i].pos_ = joint.pos / 5215.03f;
     jointData_[i].pos_ += leftJointOffset_[i];
-    velLPFs_[i].input(joint.vel / 655.34f);
-    jointData_[i].vel_ = velLPFs_[i].output();
+    if (useFilter_)
+    {
+      velVFs_[i].input(joint.vel / 655.34f, period.toSec());
+      jointData_[i].vel_ = velVFs_[i].output();
+    }
+    else
+      jointData_[i].vel_ = joint.vel / 655.34f;
     jointData_[i].tau_ = joint.torque / 655.34f;
     jointData_[i].pos_ *= jointDirection_[i];
     jointData_[i].vel_ *= jointDirection_[i];
@@ -70,8 +81,13 @@ void DiabloHW::read(const ros::Time& time, const ros::Duration& /*period*/) {
   for (const auto& joint : rightJoints) {
     jointData_[i+j].pos_ = joint.pos / 5215.03f;
     jointData_[i+j].pos_ += rightJointOffset_[j];
-    velLPFs_[i+j].input(joint.vel / 655.34f);
-    jointData_[i+j].vel_ = velLPFs_[i+j].output();
+    if (useFilter_)
+    {
+      velVFs_[i+j].input(joint.vel / 655.34f, period.toSec());
+      jointData_[i+j].vel_ = velVFs_[i].output();
+    }
+    else
+      jointData_[i+j].vel_ = joint.vel / 655.34f;
     jointData_[i+j].tau_ = joint.torque / 655.34f;
     jointData_[i+j].pos_ *= jointDirection_[j];
     jointData_[i+j].vel_ *= jointDirection_[j];
