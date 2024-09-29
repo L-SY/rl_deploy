@@ -5,7 +5,7 @@
 #include "diablo_hw/DiabloHW.h"
 
 namespace diablo {
-bool DiabloHW::init(ros::NodeHandle& root_nh, ros::NodeHandle& /*robot_hw_nh*/) {
+bool DiabloHW::init(ros::NodeHandle& root_nh, ros::NodeHandle& robot_hw_nh) {
   if (!loadUrdf(root_nh)) {
     ROS_ERROR("Error occurred while setting up urdf");
     return false;
@@ -22,7 +22,8 @@ bool DiabloHW::init(ros::NodeHandle& root_nh, ros::NodeHandle& /*robot_hw_nh*/) 
   setupImu();
 
   double lp_cutoff_frequency;
-  root_nh.param("lp_cutoff_frequency", lp_cutoff_frequency, 50.);
+  robot_hw_nh.param("lp_cutoff_frequency", lp_cutoff_frequency, 50.);
+  ROS_INFO_STREAM(lp_cutoff_frequency);
   for (int i = 0; i < 6; ++i) {
     velLPFs_.emplace_back(lp_cutoff_frequency);
   }
