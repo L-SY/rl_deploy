@@ -215,25 +215,6 @@ void rl_sdk::TorqueProtect(torch::Tensor origin_output_torques)
   }
 }
 
-#include <sys/ioctl.h>
-#include <termios.h>
-static bool kbhit()
-{
-  termios term;
-  tcgetattr(0, &term);
-
-  termios term2 = term;
-  term2.c_lflag &= ~ICANON;
-  tcsetattr(0, TCSANOW, &term2);
-
-  int byteswaiting;
-  ioctl(0, FIONREAD, &byteswaiting);
-
-  tcsetattr(0, TCSANOW, &term);
-
-  return byteswaiting > 0;
-}
-
 template <typename T>
 std::vector<T> ReadVectorFromYaml(const YAML::Node& node)
 {
@@ -363,13 +344,13 @@ void rl_sdk::SetObservation()
   obs.base_quat = torch::tensor(robot_state.imu.quaternion).unsqueeze(0);
   obs.dof_pos = torch::tensor(robot_state.motor_state.q).narrow(0, 0, params.num_of_dofs).unsqueeze(0);
   obs.dof_vel = torch::tensor(robot_state.motor_state.dq).narrow(0, 0, params.num_of_dofs).unsqueeze(0);
-//  obs.actions = torch::tensor(robot_state.actions).narrow(0, 0, params.num_of_dofs).unsqueeze(0);
+  //  obs.actions = torch::tensor(robot_state.actions).narrow(0, 0, params.num_of_dofs).unsqueeze(0);
 
   //  [theta , theta_dot, l, l_dot]
-  auto theta_tensor = torch::tensor(robot_state.vmc.theta).narrow(0, 0, params.num_of_vmc / 4).unsqueeze(0);
-  auto dtheta_tensor = torch::tensor(robot_state.vmc.dtheta).narrow(0, 0, params.num_of_vmc / 4).unsqueeze(0);
-  auto l_tensor = torch::tensor(robot_state.vmc.l).narrow(0, 0, params.num_of_vmc / 4).unsqueeze(0);
-  auto dl_tensor = torch::tensor(robot_state.vmc.dl).narrow(0, 0, params.num_of_vmc / 4).unsqueeze(0);
-
+  //  donot do like narrow(0, 0, params.num_of_vmc / 4) could make some err
+  auto theta_tensor = torch::tensor(robot_state.vmc.theta).narrow(0, 0, 2).unsqueeze(0);
+  auto dtheta_tensor = torch::tensor(robot_state.vmc.dtheta).narrow(0, 0, 2).unsqueeze(0);
+  auto l_tensor = torch::tensor(robot_state.vmc.l).narrow(0, 0, 2).unsqueeze(0);
+  auto dl_tensor = torch::tensor(robot_state.vmc.dl).narrow(0, 0, 2).unsqueeze(0);
   obs.vmc = torch::cat({theta_tensor, dtheta_tensor, l_tensor, dl_tensor}, 0).view({1, -1});
 }
