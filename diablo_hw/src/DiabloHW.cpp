@@ -43,6 +43,20 @@ bool DiabloHW::init(ros::NodeHandle& root_nh, ros::NodeHandle& robot_hw_nh) {
   return true;
 }
 
+void DiabloHW::updatePos(float new_position, int seq) {
+  new_position += jointOffset_[seq];
+  new_position *= jointDirection_[seq];
+  float delta_position = new_position - jointData_[seq].pos_;
+
+  if (delta_position < -POS_THRESHOLD) {
+    revolutionCount[seq] += 1;
+  }
+  else if (delta_position > POS_THRESHOLD) {
+    revolutionCount[seq] -= 1;
+  }
+  jointData_[seq].pos_ = revolutionCount[seq] * 2 * M_PI + new_position;
+}
+
 bool DiabloHW::loadUrdf(ros::NodeHandle& rootNh) {
   std::string urdfString;
   if (urdfModel_ == nullptr) {
@@ -56,72 +70,37 @@ bool DiabloHW::loadUrdf(ros::NodeHandle& rootNh) {
 void DiabloHW::read(const ros::Time& time, const ros::Duration& period) {
 //  std::lock_guard<std::mutex> lock(diabloSDK_->buffer_mutex);
   auto diabloInfo = diabloSDK_->rec_package;
-  auto leftJoints = {diabloInfo->left_hip, diabloInfo->left_knee, diabloInfo->left_wheel};
-  auto rightJoints = {diabloInfo->right_hip, diabloInfo->right_knee, diabloInfo->right_wheel};
+  auto Joints = std::vector<motor_msgs_t>{diabloInfo->left_hip, diabloInfo->left_knee, diabloInfo->left_wheel,diabloInfo->right_hip, diabloInfo->right_knee, diabloInfo->right_wheel};
+
   if (!init_)
   {
-    leftJointOffset_[2] = -leftJoints.end()->pos / 5215.03f;
-    rightJointOffset_[2] = -rightJoints.end()->pos / 5215.03f;
+    jointOffset_[2] = -Joints[2].pos / POS_SCALE * jointDirection_[2];
+    jointOffset_[5] = -Joints[5].pos / POS_SCALE * jointDirection_[5];
     init_ = true;
   }
   int i = 0;
-  for (const auto& joint : leftJoints) {
+  for (const auto& joint : Joints) {
     if (useFilter_)
     {
-//      posVFs_[i].input(joint.pos / 5215.03f, period.toSec());
-//      velVFs_[i].input(joint.vel / 655.34f, period.toSec());
-//      tauVFs_[i].input( joint.torque / 655.34f, period.toSec());
-//
-//      jointData_[i].pos_ = posVFs_[i].output();
-//      jointData_[i].vel_ = velVFs_[i].output();
-//      jointData_[i].tau_ = tauVFs_[i].output();
-
-      posLPFs_[i].input(joint.pos / 5215.03f);
-      velLPFs_[i].input(joint.vel / 655.34f);
-      tauLPFs_[i].input( joint.torque / 655.34f);
+      posLPFs_[i].input(joint.pos / POS_SCALE);
+      velLPFs_[i].input(joint.vel / VEL_SCALE);
+      tauLPFs_[i].input( joint.torque / TAU_SCALE);
 
       jointData_[i].pos_ = posLPFs_[i].output();
       jointData_[i].vel_ = velLPFs_[i].output();
       jointData_[i].tau_ = tauLPFs_[i].output();
-
     }
     else
     {
-      jointData_[i].pos_ = joint.pos / 5215.03f;
-      jointData_[i].vel_ = joint.vel / 655.34f;
-      jointData_[i].tau_ = joint.torque / 655.34f;
+      updatePos(joint.pos / POS_SCALE, i);
+      jointData_[i].vel_ = joint.vel / VEL_SCALE;
+      jointData_[i].tau_ = joint.torque / TAU_SCALE;
     }
-    jointData_[i].pos_ += leftJointOffset_[i];
-    jointData_[i].pos_ *= jointDirection_[i];
+//    jointData_[i].pos_ += jointOffset_[i];
+//    jointData_[i].pos_ *= jointDirection_[i];
     jointData_[i].vel_ *= jointDirection_[i];
     jointData_[i].tau_ *= jointDirection_[i];
     ++i;
-  }
-  int j = 0;
-  for (const auto& joint : rightJoints) {
-    jointData_[i+j].pos_ = joint.pos / 5215.03f;
-    jointData_[i+j].pos_ += rightJointOffset_[j];
-    if (useFilter_)
-    {
-      posLPFs_[i+j].input(joint.pos / 5215.03f);
-      velLPFs_[i+j].input(joint.vel / 655.34f);
-      tauLPFs_[i+j].input( joint.torque / 655.34f);
-
-      jointData_[i+j].pos_ = posLPFs_[i+j].output();
-      jointData_[i+j].vel_ = velLPFs_[i+j].output();
-      jointData_[i+j].tau_ = tauLPFs_[i+j].output();
-    }
-    else
-    {
-      jointData_[i+j].pos_ = joint.pos / 5215.03f;
-      jointData_[i+j].vel_ = joint.vel / 655.34f;
-      jointData_[i+j].tau_ = joint.torque / 655.34f;
-    }
-    jointData_[i+j].pos_ += rightJointOffset_[j];
-    jointData_[i+j].pos_ *= jointDirection_[j];
-    jointData_[i+j].vel_ *= jointDirection_[j];
-    jointData_[i+j].tau_ *= jointDirection_[j];
-    ++j;
   }
 
   imuData_.ori_[0] = diabloInfo->orientation.x / 32767.f;

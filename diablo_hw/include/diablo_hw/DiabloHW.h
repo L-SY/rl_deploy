@@ -23,6 +23,11 @@
 #include "robot_common/utilities/VelocityFilter.h"
 
 namespace diablo {
+constexpr float POS_SCALE = 5215.03f;
+constexpr float VEL_SCALE = 655.34f;
+constexpr float TAU_SCALE = 655.34f;
+constexpr float POS_THRESHOLD = 3.0;
+
 struct DiabloMotorData {
   double pos_, vel_, tau_;                 // state
   double cmdTau_;  // command
@@ -71,6 +76,7 @@ public:
    */
   void write(const ros::Time& time, const ros::Duration& period) override;
 
+  void updatePos(float new_position, int seq);
 private:
   /** \brief Load urdf of robot from param server.
    *
@@ -104,8 +110,8 @@ private:
   DiabloMotorData jointData_[8]{};
   std::vector<LowPassFilter> velLPFs_, posLPFs_, tauLPFs_;
   std::vector<VelocityFilter> velVFs_, posVFs_, tauVFs_;
-  std::vector<double> leftJointOffset_ = { -1.12 + 2 * M_PI, -2.8 + 2 * M_PI, 0.};
-  std::vector<double> rightJointOffset_ = { -1.12, -2.8, 0.};
+  std::vector<int> revolutionCount = {0, 0, 0, 0, 0, 0};
+  std::vector<double> jointOffset_ = { -1.12 + 2 * M_PI, -2.8 + 2 * M_PI, 0., -1.12, -2.8, 0.};
   std::vector<double> jointDirection_ = { -1., -1., 1., -1., -1., 1. };
   std::vector<std::string> jointName = {"left_fake_hip_joint", "left_hip_joint", "left_wheel_joint","right_fake_hip_joint", "right_hip_joint", "right_wheel_joint"};
 };
