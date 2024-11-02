@@ -112,6 +112,7 @@ public:
     rl_sdk(){};
     ~rl_sdk(){};
 
+    bool sendCommand_ = false;
     ModelParams params;
     Observations obs;
 

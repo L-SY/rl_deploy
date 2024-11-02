@@ -17,7 +17,6 @@ public:
     int frequency;
     nh_.param("frequency", frequency, 100);
     robotStateSub_ = nh_.subscribe("/rl/robot_state", 1, &RLInterface::robotStateCB, this);
-    rlCommandPub_ = nh_.advertise<std_msgs::Float64MultiArray>("/rl/command", 1);
     loop_rate_ = new ros::Rate(frequency);
 
     // read params from yaml
@@ -26,6 +25,12 @@ public:
     nh_.param<std::string>("rl_path", rl_path, "");
     std::string config_path = std::string(rl_path + "/config.yaml");
     ReadYaml(config_path);
+
+    nh_.param<bool>("send_command", sendCommand_, false);
+    if (sendCommand_)
+      rlCommandPub_ = nh_.advertise<std_msgs::Float64MultiArray>("/rl/command", 1);
+    else
+      rlCommandPub_ = nh_.advertise<std_msgs::Float64MultiArray>("/rl/command_test", 1);
 
     // model
     std::string model_path = std::string(rl_path + "/" + params.model_name);

@@ -290,31 +290,17 @@ void WheeledBipedalRLController::setCommand(const ros::Time& time, const ros::Du
 
     jointHandles_[2].setCommand(0);
     jointHandles_[5].setCommand(0);
-//    ROS_INFO_STREAM("empty");
   }
   else
   {
-//    if ( data == lastAction_)
-//    {
-//      for (int i = 0; i < static_cast<int>(actionMFs_.size()); ++i)
-//      {
-//        actions_[i] = data[i];
-//      }
-//      ROS_INFO_STREAM("111111111111111");
-//    }
-//    else
-//    {
       for (int i = 0; i < static_cast<int>(data.size()); ++i)
       {
 //        actionMFs_[i].input(data[i]);
 //        actions_[i] = actionMFs_[i].output();
           actions_[i] = data[i];
       }
-//      ROS_INFO_STREAM("~~~~~~~~~~~~~");
-//    }
     if (useVMC_)
     {
-//      ROS_INFO_STREAM("rl vmc");
       //  data: [left_theta, left_l, left_wheel_vel, right_theta, right_l, right_wheel_vel]
       double leftFR = VMCPids_[0].computeCommand(actions_[1] - leftSerialVMCPtr_->r_,period);
       double leftFTheta = VMCPids_[1].computeCommand(actions_[0] - leftSerialVMCPtr_->theta_,period);
@@ -338,16 +324,20 @@ void WheeledBipedalRLController::setCommand(const ros::Time& time, const ros::Du
       std::vector<double> rightJointCmd = {0., 0.};
       if (addGravityFF_)
       {
-        leftJointCmd = leftSerialVMCPtr_->getDesJointEff(leftSerialVMCPtr_->phi1_,leftSerialVMCPtr_->phi2_,gravityFeedforward_, 0.);
+        leftJointCmd = leftSerialVMCPtr_->getDesJointEff(leftSerialVMCPtr_->phi1_,leftSerialVMCPtr_->phi2_, gravityFeedforward_, 0.);
         rightJointCmd = rightSerialVMCPtr_->getDesJointEff(rightSerialVMCPtr_->phi1_,rightSerialVMCPtr_->phi2_,gravityFeedforward_, 0.);
       }
-      jointHandles_[0].setCommand(Pids_[0].computeCommand(actions_[0]-jointHandles_[0].getPosition(),period) + leftJointCmd[0]);
-      jointHandles_[1].setCommand(Pids_[1].computeCommand(actions_[1]-jointHandles_[1].getPosition(),period) + leftJointCmd[1]);
-      jointHandles_[3].setCommand(Pids_[3].computeCommand(actions_[3]-jointHandles_[3].getPosition(),period) + rightJointCmd[0]);
-      jointHandles_[4].setCommand(Pids_[4].computeCommand(actions_[4]-jointHandles_[4].getPosition(),period) + rightJointCmd[1]);
+      double pitchReturn = basePitch_;
+      double hipReturnTorque = pitchReturn * 0 ;
+      double kneeReturnTorque = abs(pitchReturn) * 0 ;
+      double wheelReturnTorque = pitchReturn * 0 ;
+      jointHandles_[0].setCommand(Pids_[0].computeCommand(actions_[0]-jointHandles_[0].getPosition(),period) + leftJointCmd[0] + hipReturnTorque);
+      jointHandles_[1].setCommand(Pids_[1].computeCommand(actions_[1]-jointHandles_[1].getPosition(),period) + leftJointCmd[1] + kneeReturnTorque);
+      jointHandles_[3].setCommand(Pids_[3].computeCommand(actions_[3]-jointHandles_[3].getPosition(),period) + rightJointCmd[0] + hipReturnTorque);
+      jointHandles_[4].setCommand(Pids_[4].computeCommand(actions_[4]-jointHandles_[4].getPosition(),period) + rightJointCmd[1] + kneeReturnTorque);
 
-      jointHandles_[2].setCommand(Pids_[2].computeCommand(actions_[2]-jointHandles_[2].getVelocity(),period));
-      jointHandles_[5].setCommand(Pids_[5].computeCommand(actions_[5]-jointHandles_[5].getVelocity(),period));
+      jointHandles_[2].setCommand(Pids_[2].computeCommand(actions_[2]-jointHandles_[2].getVelocity(),period) + wheelReturnTorque);
+      jointHandles_[5].setCommand(Pids_[5].computeCommand(actions_[5]-jointHandles_[5].getVelocity(),period) + wheelReturnTorque);
     }
   }
   lastAction_ = data;
