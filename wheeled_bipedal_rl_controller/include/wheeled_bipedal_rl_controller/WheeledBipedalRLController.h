@@ -65,7 +65,7 @@ private:
 
   int controllerState_ = NORMAL;
   ros::Time startTime_;
-  bool stateChanged_ = false;
+  bool stateChanged_ = false, simulation_ = false;
   ros::Subscriber cmdSub_;
 
   // Interface
@@ -88,7 +88,7 @@ private:
 
   // rl_interface
   rl_msgs::RobotState robotStateMsg_;
-  ros::Publisher robotStatePub_;
+  ros::Publisher robotStatePub_,simRobotStatePub_;
   ros::Subscriber rlCommandSub_;
   realtime_tools::RealtimeBuffer<std_msgs::Float64MultiArray> rlCmdRtBuffer_{};
 

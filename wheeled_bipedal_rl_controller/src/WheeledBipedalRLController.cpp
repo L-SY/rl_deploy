@@ -11,6 +11,7 @@ namespace rl_controller
 bool WheeledBipedalRLController::init(hardware_interface::RobotHW* robot_hw, ros::NodeHandle& root_nh,
                                               ros::NodeHandle& controller_nh)
 {
+  controller_nh.param("simulation", simulation_, false);
   // Hardware interface
   imuSensorHandle_ = robot_hw->get<hardware_interface::ImuSensorInterface>()->getHandle("base_imu");
   robotStateHandle_ = robot_hw->get<hardware_interface::RobotStateInterface>()->getHandle("robot_state");
@@ -25,6 +26,8 @@ bool WheeledBipedalRLController::init(hardware_interface::RobotHW* robot_hw, ros
 
   // rl_interface
   robotStatePub_ = controller_nh.advertise<rl_msgs::RobotState>("/rl/robot_state", 1);
+  if (simulation_)
+    simRobotStatePub_ = controller_nh.advertise<rl_msgs::RobotState>("/rl/simulation/robot_state", 1);
   rlCommandSub_ = controller_nh.subscribe("/rl/command", 1, &WheeledBipedalRLController::rlCommandCB, this);
 
   controller_nh.param("default_length", default_length_, 0.18);
@@ -199,11 +202,6 @@ void WheeledBipedalRLController::pubRLState()
   robotStateMsg_.imu_states.orientation.z = imuSensorHandle_.getOrientation()[2];
   robotStateMsg_.imu_states.orientation.w = imuSensorHandle_.getOrientation()[3];
 
-//  robotStateMsg_.imu_states.orientation.x = 0;
-//  robotStateMsg_.imu_states.orientation.y = 0;
-//  robotStateMsg_.imu_states.orientation.z = 0;
-//  robotStateMsg_.imu_states.orientation.w = 1;
-
 //  For test imu
   geometry_msgs::Quaternion base;
   double roll, yaw;
@@ -222,10 +220,6 @@ void WheeledBipedalRLController::pubRLState()
   robotStateMsg_.imu_states.angular_velocity.x = imuSensorHandle_.getAngularVelocity()[0];
   robotStateMsg_.imu_states.angular_velocity.y = imuSensorHandle_.getAngularVelocity()[1];
   robotStateMsg_.imu_states.angular_velocity.z = imuSensorHandle_.getAngularVelocity()[2];
-
-//  robotStateMsg_.imu_states.angular_velocity.x = 0;
-//  robotStateMsg_.imu_states.angular_velocity.y = 0;
-//  robotStateMsg_.imu_states.angular_velocity.z = 0;
 
   robotStateMsg_.imu_states.linear_acceleration.x = imuSensorHandle_.getLinearAcceleration()[0];
   robotStateMsg_.imu_states.linear_acceleration.y = imuSensorHandle_.getLinearAcceleration()[1];
@@ -271,6 +265,8 @@ void WheeledBipedalRLController::pubRLState()
     robotStateMsg_.actions[i] = actions_[i];
   }
   robotStatePub_.publish(robotStateMsg_);
+  if (simulation_)
+    simRobotStatePub_.publish(robotStateMsg_);
 }
 
 void WheeledBipedalRLController::setCommand(const ros::Time& time, const ros::Duration& period)
@@ -279,14 +275,14 @@ void WheeledBipedalRLController::setCommand(const ros::Time& time, const ros::Du
   auto& data = rt_buffer->data;
   if (data.empty())
   {
-//    jointHandles_[0].setCommand(Pids_[0].computeCommand(0-jointHandles_[0].getPosition(),period));
-//    jointHandles_[1].setCommand(Pids_[1].computeCommand(0-jointHandles_[1].getPosition(),period));
-//    jointHandles_[3].setCommand(Pids_[3].computeCommand(0-jointHandles_[3].getPosition(),period));
-//    jointHandles_[4].setCommand(Pids_[4].computeCommand(0-jointHandles_[4].getPosition(),period));
-    jointHandles_[0].setCommand(0);
-    jointHandles_[1].setCommand(0);
-    jointHandles_[3].setCommand(0);
-    jointHandles_[4].setCommand(0);
+    jointHandles_[0].setCommand(Pids_[0].computeCommand(0-jointHandles_[0].getPosition(),period));
+    jointHandles_[1].setCommand(Pids_[1].computeCommand(0-jointHandles_[1].getPosition(),period));
+    jointHandles_[3].setCommand(Pids_[3].computeCommand(0-jointHandles_[3].getPosition(),period));
+    jointHandles_[4].setCommand(Pids_[4].computeCommand(0-jointHandles_[4].getPosition(),period));
+//    jointHandles_[0].setCommand(0);
+//    jointHandles_[1].setCommand(0);
+//    jointHandles_[3].setCommand(0);
+//    jointHandles_[4].setCommand(0);
 
     jointHandles_[2].setCommand(0);
     jointHandles_[5].setCommand(0);
