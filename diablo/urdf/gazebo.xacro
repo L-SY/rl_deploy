@@ -1,0 +1,53 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro" name="gazebo">
+    <xacro:include filename="$(find diablo)/urdf/common.xacro"/>
+    <xacro:include filename="$(find diablo)/urdf/imu/imu.urdf.xacro"/>
+
+    <xacro:IMU connected_to="diablo_base_link" imu_name="base_imu"
+               mesh_file="package://diablo/urdf/imu/imu.stl" xyz="0.00 0.00 0.00"
+               rpy="0.00 0.00 0.00"/>
+
+    <xacro:macro name="diablo_trans" params="fixed_wheel='false' fixed_leg='false' close_chain='false'">
+        <xacro:unless value="${fixed_leg}">
+            <!-- Define transmissions for each joint -->
+            <xacro:create_transmission joint_name="right_hip_joint"/>
+            <xacro:create_transmission joint_name="right_knee_joint"/>
+            <xacro:create_transmission joint_name="left_hip_joint"/>
+            <xacro:create_transmission joint_name="left_knee_joint"/>
+        </xacro:unless>
+
+        <xacro:unless value="${fixed_wheel}">
+            <xacro:create_transmission joint_name="left_wheel_joint"/>
+            <xacro:create_transmission joint_name="right_wheel_joint"/>
+<!--            <xacro:create_transmission joint_name="left_wheel_joint" hardware_interface="VelocityJointInterface"/>-->
+<!--            <xacro:create_transmission joint_name="right_wheel_joint" hardware_interface="VelocityJointInterface"/>-->
+        </xacro:unless>
+
+        <xacro:if value="${close_chain}">
+            <xacro:create_transmission joint_name="right_fake_hip_joint"/>
+            <xacro:create_transmission joint_name="right_fake_knee_joint"/>
+
+            <xacro:create_transmission joint_name="left_fake_hip_joint"/>
+            <xacro:create_transmission joint_name="left_fake_knee_joint"/>
+
+            <gazebo>
+                <joint name="close_chain_left" type="revolute">
+                    <parent>left_fake_shank_link</parent>
+                    <child>left_shank_link</child>
+                    <axis>
+                        <xyz>0 0 1</xyz>
+                    </axis>
+                    <pose>0.09 0 0 0 0 0</pose>
+                </joint>
+                <joint name="close_chain_right" type="revolute">
+                    <parent>right_fake_shank_link</parent>
+                    <child>right_shank_link</child>
+                    <axis>
+                        <xyz>0 0 1</xyz>
+                    </axis>
+                    <pose>0.09 0 0 0 0 0</pose>
+                </joint>
+            </gazebo>
+        </xacro:if>
+    </xacro:macro>
+</robot>

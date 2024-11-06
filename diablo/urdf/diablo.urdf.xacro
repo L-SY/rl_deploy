@@ -1,0 +1,189 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+    <!-- Include predefined materials -->
+    <xacro:include filename="$(find diablo)/urdf/common.xacro"/>
+
+
+    <!-- Base Link -->
+    <xacro:create_link name="diablo_base_link" mass="11.639" ixx="0.071628" ixy="-5.9879E-09" ixz="-0.00097471"
+                       iyy="0.16274" iyz="-1.6369E-08" izz="0.14673"
+                       mesh_file="package://diablo/meshes/base_link.stl"
+                       scale_factor="1" vision_scales="0.1 0.1 0.1"
+                       collision_scales="0.1 0.1 0.1"/>
+
+<!--    <link name="world"/>-->
+
+<!--    <joint name="world_to_base" type="fixed">-->
+<!--        <parent link="world"/>-->
+<!--        <child link="diablo_base_link"/>-->
+<!--        <origin xyz="0 0 0.3" rpy="0 0 0"/>-->
+<!--    </joint>-->
+
+    <!--    main link-->
+    <xacro:create_link name="left_thigh_link" mass="0.10382" ixx="3.6972E-05" ixy="2.4106E-05" ixz="4.3699E-10"
+                       iyy="0.00029278" iyz="-4.1243E-11" izz="0.00032532"
+                       mesh_file="package://diablo/meshes/left_leg1.STL"
+                       scale_factor="1"/>
+    <xacro:create_link name="left_shank_link" mass="0.18218" ixx="4.1372E-05" ixy="5.1445E-09" ixz="-7.3659E-06"
+                       iyy="0.00048219" iyz="2.5521E-11" izz="0.00050441"
+                       mesh_file="package://diablo/meshes/left_leg2.STL"
+                       scale_factor="1"/>
+
+    <link name="left_wheel">
+        <inertial>
+            <origin rpy="0 0 0" xyz="0 0 0"/>
+            <mass value="2.9494"/>
+            <inertia ixx="0.0069338" ixy="2.8693e-09" ixz="4.6779e-09" iyy="0.006934" iyz="-5.0441e-11" izz="0.012567"/>
+        </inertial>
+        <visual>
+            <origin rpy="0 0 0" xyz="0 0 0"/>
+            <geometry>
+                <cylinder radius="0.1" length="0.05"/>
+            </geometry>
+        </visual>
+        <collision>
+            <origin rpy="0 0 0" xyz="0 0 0"/>
+            <geometry>
+                <cylinder radius="0.1" length="0.05"/>
+            </geometry>
+        </collision>
+    </link>
+
+    <xacro:create_link name="right_thigh_link" mass="0.10382" ixx="3.6972E-05" ixy="2.4106E-05" ixz="-4.3686E-10"
+                       iyy="0.00029278" iyz="4.1459E-11" izz="0.00032532"
+                       mesh_file="package://diablo/meshes/right_leg1.STL"
+                       scale_factor="1"/>
+    <xacro:create_link name="right_shank_link" mass="0.18218" ixx="4.1372E-05" ixy="5.1777E-09" ixz="7.3659E-06"
+                       iyy="0.00048219" iyz="4.5225E-11" izz="0.00050441"
+                       mesh_file="package://diablo/meshes/right_leg2.STL"
+                       scale_factor="1"/>
+
+    <link name="right_wheel">
+        <inertial>
+            <origin rpy="0 0 0" xyz="0 0 0"/>
+            <mass value="2.9494"/>
+            <inertia ixx="0.0069338" ixy="2.8693e-09" ixz="4.6779e-09" iyy="0.006934" iyz="-5.0441e-11" izz="0.012567"/>
+        </inertial>
+        <visual>
+            <origin rpy="0 0 0" xyz="0 0 0"/>
+            <geometry>
+                <cylinder radius="0.1" length="0.05"/>
+            </geometry>
+        </visual>
+        <collision>
+            <origin rpy="0 0 0" xyz="0 0 0"/>
+            <geometry>
+                <cylinder radius="0.1" length="0.05"/>
+            </geometry>
+        </collision>
+    </link>
+
+    <!-- indispensable fake link-->
+    <xacro:create_link name="left_fake_thigh_link" mass="1.3837" ixx="0.003352" ixy="2.7785E-09" ixz="-6.5913E-05" iyy="0.0034908"
+                       iyz="4.5045E-10" izz="0.0034856"
+                       mesh_file="package://diablo/meshes/left_motor.STL"
+                       scale_factor="1"/>
+    <xacro:create_link name="right_fake_thigh_link" mass="1.3838" ixx="0.003352" ixy="-2.6527E-09" ixz="6.5914E-05"
+                       iyy="0.0034908" iyz="-7.2968E-10" izz="0.0034856"
+                       mesh_file="package://diablo/meshes/right_motor.STL"
+                       scale_factor="1"/>
+
+    <xacro:macro name="chassis" params="fixed_wheel='false' fixed_leg='false' close_chain='false' use_gazebo='false' use_simulation='false'">
+        <xacro:if value="${use_gazebo}">
+            <xacro:include filename="$(find diablo)/urdf/gazebo.xacro"/>
+            <xacro:diablo_trans fixed_wheel="${fixed_wheel}" fixed_leg="${fixed_leg}" close_chain="${close_chain}"/>
+
+            <xacro:if value="${close_chain}">
+                <!--    fake link-->
+                <xacro:create_link name="left_fake_shank_link" mass="0.071103" ixx="1.6657E-05" ixy="-5.5246E-06" ixz="3.9598E-14"
+                                   iyy="0.00017966" iyz="-6.5493E-15" izz="0.00019328"
+                                   mesh_file="package://diablo/meshes/left_leg3.STL"
+                                   scale_factor="1"/>
+                <xacro:create_link name="right_fake_shank_link" mass="0.071103" ixx="1.6657E-05" ixy="-5.5246E-06" ixz="1.4852E-14"
+                                   iyy="0.00017966" iyz="-6.5194E-14" izz="0.00019328"
+                                   mesh_file="package://diablo/meshes/right_leg3.STL"
+                                   scale_factor="1"/>
+            </xacro:if>
+        </xacro:if>
+
+        <xacro:unless value="${fixed_leg}">
+            <xacro:create_joint name="left_hip_joint" type="revolute" parent="left_fake_thigh_link" child="left_thigh_link"
+                                origin_xyz="0 0 0" lower="0" upper="1.57" effort="27" velocity="26"
+                                origin_rpy="0 0 -2.8729" axis_xyz="0 0 1"/>
+            <xacro:create_joint name="left_knee_joint" type="revolute" parent="left_thigh_link" child="left_shank_link"
+                                origin_xyz="0.14 0 0" lower="-2" upper="0" effort="27" velocity="26"
+                                origin_rpy="0 0 2.8729" axis_xyz="0 0 1"/>
+            <xacro:create_joint name="right_hip_joint" type="revolute" parent="right_fake_thigh_link" child="right_thigh_link"
+                                origin_xyz="0 0 0" lower="0" upper="1.57" effort="27" velocity="26"
+                                origin_rpy="0 0 -2.8729" axis_xyz="0 0 1"/>
+            <xacro:create_joint name="right_knee_joint" type="revolute" parent="right_thigh_link" child="right_shank_link"
+                                origin_xyz="0.14 0 0" lower="-2" upper="0" effort="27" velocity="26"
+                                origin_rpy="0 0 2.8729" axis_xyz="0 0 1"/>
+
+            <xacro:if value="${close_chain}">
+                <xacro:create_joint name="left_fake_hip_joint" type="revolute" parent="diablo_base_link" child="left_fake_thigh_link"
+                                    origin_xyz="0 0.18755 0" origin_rpy="1.5708 0.13433 -3.1416" axis_xyz="0 0 1" lower="-1.57" upper="1.57" effort="27" velocity="26"/>
+                <xacro:create_joint name="left_fake_knee_joint" type="revolute" parent="left_fake_thigh_link" child="left_fake_shank_link"
+                                    origin_xyz="0.09 0 0"
+                                    origin_rpy="0 0 -2.8729" axis_xyz="0 0 1" lower="-1.57" upper="1.57" effort="27" velocity="26"/>
+                <xacro:create_joint name="right_fake_hip_joint" type="revolute" parent="diablo_base_link" child="right_fake_thigh_link"
+                                    origin_xyz="0 -0.18755 0" origin_rpy="1.5708 0.13433 3.1416" axis_xyz="0 0 1" lower="-1.57" upper="1.57" effort="27" velocity="26"/>
+                <xacro:create_joint name="right_fake_knee_joint" type="revolute" parent="right_fake_thigh_link" child="right_fake_shank_link"
+                                    origin_xyz="0.09 0 0"
+                                    origin_rpy="0 0 -2.8729" axis_xyz="0 0 1" lower="-1.57" upper="1.57" effort="27" velocity="26"/>
+            </xacro:if>
+            <xacro:unless value="${close_chain}">
+                <xacro:unless value="${use_simulation}">
+                    <xacro:create_joint name="left_fake_hip_joint" type="revolute" parent="diablo_base_link" child="left_fake_thigh_link"
+                                        origin_xyz="0 0.18755 0" origin_rpy="1.5708 0.13433 -3.1416" axis_xyz="0 0 1" lower="-1.57" upper="1.57" effort="27" velocity="26"/>
+                    <xacro:create_joint name="right_fake_hip_joint" type="revolute" parent="diablo_base_link" child="right_fake_thigh_link"
+                                        origin_xyz="0 -0.18755 0" origin_rpy="1.5708 0.13433 3.1416" axis_xyz="0 0 1" lower="-1.57" upper="1.57" effort="27" velocity="26"/>
+                </xacro:unless>
+                <xacro:if value="${use_simulation}">
+                    <xacro:create_joint name="left_fake_hip_joint" type="fixed" parent="diablo_base_link" child="left_fake_thigh_link"
+                                        origin_xyz="0 0.18755 0" origin_rpy="1.5708 0.13433 -3.1416" axis_xyz="0 0 1"/>
+                    <xacro:create_joint name="right_fake_hip_joint" type="fixed" parent="diablo_base_link" child="right_fake_thigh_link"
+                                        origin_xyz="0 -0.18755 0" origin_rpy="1.5708 0.13433 3.1416" axis_xyz="0 0 1"/>
+                </xacro:if>
+            </xacro:unless>
+        </xacro:unless>
+
+        <xacro:if value="${fixed_leg}">
+            <xacro:create_joint name="left_hip_joint" type="fixed" parent="left_fake_thigh_link" child="left_thigh_link" origin_xyz="0 0 0"
+                                origin_rpy="0 0 -2.8729" axis_xyz="0 0 1"/>
+            <xacro:create_joint name="left_knee_joint" type="fixed" parent="left_thigh_link" child="left_shank_link" origin_xyz="0.14 0 0"
+                                origin_rpy="0 0 2.8729" axis_xyz="0 0 1"/>
+            <xacro:create_joint name="right_hip_joint" type="fixed" parent="right_fake_thigh_link" child="right_thigh_link" origin_xyz="0 0 0"
+                                origin_rpy="0 0 -2.8729" axis_xyz="0 0 1"/>
+            <xacro:create_joint name="right_knee_joint" type="fixed" parent="right_thigh_link" child="right_shank_link"
+                                origin_xyz="0.14 0 0"
+                                origin_rpy="0 0 2.8729" axis_xyz="0 0 1"/>
+            <xacro:create_joint name="left_fake_hip_joint" type="fixed" parent="diablo_base_link" child="left_fake_thigh_link"
+                                origin_xyz="0 0.18755 0" origin_rpy="1.5708 0.13433 -3.1416" axis_xyz="0 0 1"/>
+            <xacro:create_joint name="right_fake_hip_joint" type="fixed" parent="diablo_base_link" child="right_fake_thigh_link"
+                                origin_xyz="0 -0.18755 0" origin_rpy="1.5708 0.13433 3.1416" axis_xyz="0 0 1"/>
+
+            <xacro:if value="${close_chain}">
+                <xacro:create_joint name="left_fake_knee_joint" type="fixed" parent="left_fake_thigh_link" child="left_fake_shank_link" origin_xyz="0.09 0 0"
+                                    origin_rpy="0 0 -2.8729" axis_xyz="0 0 1"/>
+                <xacro:create_joint name="right_fake_knee_joint" type="fixed" parent="right_fake_thigh_link" child="right_fake_shank_link"
+                                    origin_xyz="0.09 0 0"
+                                    origin_rpy="0 0 -2.8729" axis_xyz="0 0 1"/>
+            </xacro:if>
+        </xacro:if>
+
+        <xacro:unless value="${fixed_wheel}">
+            <xacro:create_joint name="left_wheel_joint" type="revolute" parent="left_shank_link" child="left_wheel"
+                                origin_xyz="0.14 0 0.0537" origin_rpy="0 0 0.13433" axis_xyz="0 0 1" lower="-1e10" upper="1e10" effort="27" velocity="26"/>
+            <xacro:create_joint name="right_wheel_joint" type="revolute" parent="right_shank_link" child="right_wheel"
+                                origin_xyz="0.14 0 -0.0537" origin_rpy="0 0 0.13433" axis_xyz="0 0 1" lower="-1e10" upper="1e10" effort="27" velocity="26"/>
+        </xacro:unless>
+        <xacro:if value="${fixed_wheel}">
+            <xacro:create_joint name="left_wheel_joint" type="fixed" parent="left_shank_link" child="left_wheel"
+                                origin_xyz="0.14 0 0.0537" origin_rpy="0 0 0.13433" axis_xyz="0 0 1"/>
+            <xacro:create_joint name="right_wheel_joint" type="fixed" parent="right_shank_link" child="right_wheel"
+                                origin_xyz="0.14 0 -0.0537" origin_rpy="0 0 0.13433" axis_xyz="0 0 1"/>
+        </xacro:if>
+
+    </xacro:macro>
+</robot>
