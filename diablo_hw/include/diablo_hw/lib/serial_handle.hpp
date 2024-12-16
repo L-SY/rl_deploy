@@ -11,6 +11,7 @@
 #include "joint_ctrl_protocol.h"
 #include "VulcanSerial/SerialPort.hpp"
 #include <mutex>
+#include <memory>
 
 using namespace std;
 

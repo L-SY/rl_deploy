@@ -1,6 +1,7 @@
 //
 // Created by lsy on 24-9-23.
 //
+// ref: https://github.com/qiayuanl/legged_control
 
 #include "diablo_hw/DiabloHW.h"
 
@@ -96,8 +97,6 @@ void DiabloHW::read(const ros::Time& time, const ros::Duration& period) {
       jointData_[i].vel_ = joint.vel / VEL_SCALE;
       jointData_[i].tau_ = joint.torque / TAU_SCALE;
     }
-//    jointData_[i].pos_ += jointOffset_[i];
-//    jointData_[i].pos_ *= jointDirection_[i];
     jointData_[i].vel_ *= jointDirection_[i];
     jointData_[i].tau_ *= jointDirection_[i];
     ++i;

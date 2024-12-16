@@ -1,6 +1,7 @@
 //
 // Created by lsy on 24-9-23.
 //
+// ref: https://github.com/qiayuanl/legged_control
 
 #include "diablo_hw/DiabloHW.h"
 
