@@ -1,0 +1,7 @@
+diablo_hw_run:
+  loop_frequency: 500
+  cycle_time_error_threshold: 0.002
+  thread_priority: 95
+  lp_cutoff_frequency: 100
+  use_filter: false
+  max_acc: 100

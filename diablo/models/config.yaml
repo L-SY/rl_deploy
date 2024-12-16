@@ -1,0 +1,37 @@
+model_name: "policy_only_stand_c5k.pt"
+framework: "isaacgym"
+rows: 2
+cols: 3
+use_history: False
+use_vmc: False
+dt: 0.005
+decimation: 2
+num_observations: 27
+observations: ["ang_vel", "gravity_vec", "commands", "dof_pos", "dof_vel", "actions"]
+clip_obs: 100.0
+clip_actions_lower: [-100, -100, -100,
+                     -100, -100, -100]
+clip_actions_upper: [100, 100, 100,
+                     100, 100, 100]
+
+#  maybe could use in stand
+#  fixed_kp: [80, 80, 80,
+#             80, 80, 80]
+#  fixed_kd: [3, 3, 3,
+#             3, 3, 3]
+
+num_of_dofs: 6
+action_scale_pos: 0.5
+action_scale_vel: 10.0
+lin_vel_scale: 2.0
+ang_vel_scale: 0.25
+dof_pos_scale: 1.0
+dof_vel_scale: 0.05
+
+commands_scale: [2.0, 0.25, 5.0]
+torque_limits: [26, 26, 26,
+                26, 26, 26]
+default_dof_pos: [ 0, 0, 0.0,
+                   0, 0, 0.0]
+#default_dof_pos: [ -0.5, 1.0, 0.0,
+#                   -0.5, 1.0, 0.0]
