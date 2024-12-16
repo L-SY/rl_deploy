@@ -4,6 +4,6 @@
         <param name="frequency" value="10"/>
         <param name="robot_name" value="diablo"/>
         <param name="send_command" value="true"/>
-        <param name="rl_path" value="/home/lsy/rl_ws/src/assets/diablo/models"/>
+        <param name="rl_path" value="$(find diablo)/models"/>
     </node>
 </launch>
