@@ -1,0 +1,11 @@
+<launch>
+    <node name="joy_node" pkg="joy" type="joy_node" output="screen">
+        <param name="dev" value="/dev/input/js0" />
+    </node>
+
+    <param name="twist_topic" value="/controllers/wheeled_bipedal_rl_controller/command" />
+    <param name="rate" value="1000"/>
+
+    <node name="joy_twist" pkg="ps5_joy" type="joy_twist" output="screen">
+    </node>
+</launch>

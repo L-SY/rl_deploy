@@ -1,0 +1,106 @@
+<sdf version="1.6">
+    <model name="pole">
+        <static>true</static>
+        <link name="link_mid">
+            <collision name="collision">
+                <geometry>
+                    <box>
+                        <size>1 0.12 0.15</size>
+                    </box>
+                </geometry>
+                <pose>0 0 0 0 0 0</pose>
+            </collision>
+            <visual name="visual">
+                <geometry>
+                    <box>
+                        <size>1 0.12 0.15</size>
+                    </box>
+                </geometry>
+                <material>
+                    <script>
+                        <uri>file://media/materials/scripts/gazebo.material</uri>
+                        <name>Gazebo/Green</name>
+                    </script>
+                </material>
+                <pose>0 0 0 0 0 0</pose>
+            </visual>
+            <pose>0 0 0 0 0 0</pose>
+        </link>
+        <link name="link_back">
+            <collision name="collision">
+                <geometry>
+                    <box>
+                        <size>0.2 1 0.15</size>
+                    </box>
+                </geometry>
+                <pose>-0.1 0 0 0 0 0</pose>
+            </collision>
+            <visual name="visual">
+                <geometry>
+                    <box>
+                        <size>0.2 1 0.15</size>
+                    </box>
+                </geometry>
+                <material>
+                    <script>
+                        <uri>file://media/materials/scripts/gazebo.material</uri>
+                        <name>Gazebo/Green</name>
+                    </script>
+                </material>
+                <pose>-0.1 0 0 0 0 0</pose>
+            </visual>
+            <pose>-0.1 0 0 0 0 0</pose>
+        </link>
+        <link name="ramp">
+            <collision name="collision">
+                <geometry>
+                    <box>
+                        <size>2 4 0.5</size>
+                    </box>
+                </geometry>
+                <pose>0.7 0 -0.1 0 -0.08 0</pose>
+            </collision>
+            <visual name="visual">
+                <geometry>
+                    <box>
+                        <size>2 4 0.5</size>
+                    </box>
+                </geometry>
+                <material>
+                    <script>
+                        <uri>file://media/materials/scripts/gazebo.material</uri>
+                        <name>Gazebo/Green</name>
+                    </script>
+                </material>
+                <pose>0.7 0 -0.1 0 -0.08 0</pose>
+            </visual>
+            <pose>0.7 0 -0.1 0 -0.08 0</pose> <!-- Rotation for ramp angle -->
+        </link>
+        <link name="platform">
+              <collision name="collision">
+                <geometry>
+                  <box>
+                    <size>4 4 0.5</size>
+                  </box>
+                </geometry>
+                <pose>2.15 0 0 0 0 0</pose>
+              </collision>
+              <visual name="visual">
+                <geometry>
+                  <box>
+                    <size>4 4 0.5</size>
+                  </box>
+                </geometry>
+                <material>
+                  <script>
+                    <uri>file://media/materials/scripts/gazebo.material</uri>
+                    <name>Gazebo/Green</name>
+                  </script>
+                </material>
+                <pose>2.15 0 0 0 0 0</pose>
+              </visual>
+              <pose>2.15 0 0 0 0 0</pose>
+            </link>
+
+    </model>
+</sdf>

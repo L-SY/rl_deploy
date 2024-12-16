@@ -1,0 +1,70 @@
+<?xml version="1.0" ?>
+<sdf version="1.5">
+    <world name="default">
+        <!-- Target real time factor is the product of max_step_size and real_time_update_rate -->
+        <!-- Negative real_time_update_rate means that Gazebo will run as fast as possible -->
+        <physics type="ode">
+            <type>world</type>
+            <max_step_size>0.001</max_step_size>
+            <real_time_update_rate>1000</real_time_update_rate>
+            <iters>500</iters>
+        </physics>
+        <!-- A global light source -->
+        <include>
+            <uri>model://sun</uri>
+        </include>
+        <!-- A ground plane -->
+        <include>
+            <uri>model://ground_plane</uri>
+        </include>
+
+        <!-- Add STL Models -->
+        <model name="slopes">
+            <static>true</static>
+            <link name="slope">
+                <visual name="visual_slopes">
+                    <geometry>
+                        <mesh>
+                            <uri>file:///home/lsy/Desktop/Gazebo/slopes.stl</uri>
+                            <scale>0.001 0.001 0.001</scale>
+                        </mesh>
+                    </geometry>
+                    <pose>1 2 0 0 0 -1.57</pose>
+                </visual>
+                <collision name="collision_slopes">
+                    <geometry>
+                        <mesh>
+                            <uri>file:///home/lsy/Desktop/Gazebo/slopes.stl</uri>
+                            <scale>0.001 0.001 0.001</scale>
+                        </mesh>
+                    </geometry>
+                    <pose>1 2 0 0 0 -1.57</pose>
+                </collision>
+            </link>
+        </model>
+
+        <model name="model_speed_bumps">
+            <static>true</static>
+            <link name="speed_bumps">
+                <visual name="visual_speed_bumps">
+                    <geometry>
+                        <mesh>
+                            <uri>file:///home/lsy/Desktop/Gazebo/speed_bumps.stl</uri>
+                            <scale>0.001 0.001 0.001</scale>
+                        </mesh>
+                    </geometry>
+                    <pose>1 -1 0 0 0 0</pose>
+                </visual>
+                <collision name="collision_speed_bumps">
+                    <geometry>
+                        <mesh>
+                            <uri>file:///home/lsy/Desktop/Gazebo/speed_bumps.stl</uri>
+                            <scale>0.001 0.001 0.001</scale>
+                        </mesh>
+                    </geometry>
+                    <pose>1 -1 0 0 0 0</pose>
+                </collision>
+            </link>
+        </model>
+    </world>
+</sdf>
