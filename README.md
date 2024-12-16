@@ -1,9 +1,11 @@
 # rl_deploy
-> Use ros_control to realize sim2sim and sim2real.
+> Use ros_control to realize sim2sim in gazebo and sim2real
+
+>Many thanks to DirectDriveTech-DDT[https://github.com/DirectDriveTech-DDT]  for the guidance and hardware provided for this project
 
 ### Frame
 
-- Among them, `rl_sdk` mainly refers to https://github.com/fan-ziqi/rl_sar and uses `libtorch` to complete the loading of .pt files.
+- `rl_sdk` mainly refers to https://github.com/fan-ziqi/rl_sar and uses `libtorch` to complete the loading of .pt files.
 
 - `rl_msgs` ：For interaction between rl_sdk and rl_controller
 -  `wheeled_bipedal_rl_controller`：use ros_control to interact with gazebo
@@ -16,6 +18,7 @@
 
 ```python
 sudo apt install ros-noetic-teleop-twist-keyboard ros-noetic-controller-interface  ros-noetic-gazebo-ros-control ros-noetic-joint-state-controller ros-noetic-effort-controllers ros-noetic-joint-trajectory-controller
+sudo apt-get install ros-noetic-imu*
 ```
 
 - libtorch
@@ -44,4 +47,17 @@ sudo ldconfig
 mon launch diablo load_gazebo.launch
 mon launch diablo load_controllers.launch
 mon launch diablo load_rl_interface.launch
+```
+
+#### Reference code
+> Thank very much for these excellent open source projects！
+
+- Very good sim2sim code reference：
+```
+https://github.com/fan-ziqi/rl_sar
+```
+- Top ros_control use cases
+```aiignore
+https://github.com/qiayuanl/legged_control
+https://github.com/rm-controls/rm_control
 ```
