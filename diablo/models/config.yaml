@@ -1,4 +1,7 @@
-model_name: "integrated_policy_5w.pt"
+#model_name: "integrated_policy_1w.pt"
+#model_name: "integrated_policy_5w.pt"
+#model_name: "integrated_policy_without_ff_1w.pt"
+model_name: "integrated_policy_only_stand_1k4.pt"
 framework: "isaacgym"
 rows: 2
 cols: 3

@@ -12,14 +12,6 @@ clip_actions_lower: [-200., -200, -200,
                      -200., -200, -200]
 clip_actions_upper: [200., 200, 200,
                      200., 200, 200]
-#clip_actions_lower: [-1., 0., -2,
-#                     -1., 0., -2]
-#clip_actions_upper: [1., 0.3, 2,
-#                     1., 0.3, 2]
-#clip_actions_lower: [-0.5, 0, -27,
-#                     -0.5, 0, -27]
-#clip_actions_upper: [0.5, 0.5, 27,
-#                     0.5, 0.5, 27]
 
 num_of_dofs: 6
 action_scale_pos: 0.5
