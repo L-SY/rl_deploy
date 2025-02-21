@@ -1,5 +1,5 @@
-# rl_deploy
-> Use ros_control to realize sim2sim in gazebo and sim2real
+# diablo_rl_deploy
+> Use ros_control to realize diablo's sim2sim in gazebo and sim2real
 
 >Many thanks to DirectDriveTech-DDT[https://github.com/DirectDriveTech-DDT]  for the guidance and hardware provided for this project
 
