@@ -17,9 +17,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
         INCLUDE_DIRS
         include
-        library/matplotlibcpp
         library/observation_buffer
-        library/loop
         CATKIN_DEPENDS
         ${CATKIN_PACKAGE_DEPENDENCIES}
         LIBRARIES
@@ -33,9 +31,7 @@ link_directories(/usr/local/lib)
 include_directories(
         include
         ${catkin_INCLUDE_DIRS}
-        library/matplotlibcpp
         library/observation_buffer
-        library/loop
         ${YAML_CPP_INCLUDE_DIR}
         ${TORCH_INCLUDE_DIRS}
 )
