@@ -64,6 +64,7 @@ struct ModelParams
     int decimation;
     int num_observations;
     std::vector<std::string> observations;
+    std::vector<int> observations_history;
     double damping;
     double stiffness;
     double action_scale_pos;
@@ -115,6 +116,10 @@ public:
     bool sendCommand_ = false;
     ModelParams params;
     Observations obs;
+
+    // history buffer
+    ObservationBuffer history_obs_buf;
+    torch::Tensor history_obs;
 
     RobotState<double> robot_state;
 

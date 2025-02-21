@@ -280,6 +280,15 @@ void rl_sdk::ReadYaml(const std::string config_path)
   params.decimation = config["decimation"].as<int>();
   params.num_observations = config["num_observations"].as<int>();
   params.observations = ReadVectorFromYaml<std::string>(config["observations"]);
+  if (config["observations_history"].IsNull())
+  {
+    params.observations_history = {};
+  }
+  else
+  {
+    params.observations_history = ReadVectorFromYaml<int>(config["observations_history"]);
+    history_obs_buf = ObservationBuffer(1, params.num_observations, params.observations_history.size());
+  }
   params.clip_obs = config["clip_obs"].as<double>();
   if (config["clip_actions_lower"].IsNull() && config["clip_actions_upper"].IsNull())
   {
@@ -330,9 +339,27 @@ torch::Tensor rl_sdk::Forward()
 {
   torch::autograd::GradMode::set_enabled(false);
   torch::Tensor clamped_obs = ComputeObservation();
-
   torch::Tensor actions;
-  actions = model.forward({ clamped_obs }).toTensor();
+  torch::Tensor latent;
+
+  if(params.use_history)
+  {
+    torch::Tensor clamped_obs = ComputeObservation();
+
+    history_obs_buf.insert(clamped_obs);
+    history_obs = history_obs_buf.get_obs_vec(this->params.observations_history);
+
+    std::vector<torch::jit::IValue> inputs;
+    inputs.push_back(clamped_obs);
+    inputs.push_back(history_obs);
+
+    auto output = model.forward(inputs).toTuple();
+
+    actions = output->elements()[0].toTensor();
+    latent = output->elements()[1].toTensor();
+  }
+  else
+    actions = model.forward({ clamped_obs }).toTensor();
 
   return actions;
 }
