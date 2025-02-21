@@ -36,7 +36,3 @@ add_library(${PROJECT_NAME} SHARED ${sources})
 
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 
-#add_executable(test_can
-#        test/test_can.cpp)
-#
-#target_link_libraries(test_can rl_common ${catkin_LIBRARIES})

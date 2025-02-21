@@ -14,10 +14,9 @@
 
 // robot_common
 #include "robot_common/interface/hardware_interface/robot_state_interface.h"
-#include "robot_common/utilities/ori_tool.h"
 #include "robot_common/utilities/tf_rt_broadcaster.h"
-#include "robot_common/utilities/InertialFilter.h"
-#include "robot_common/utilities/MeanFilter.h"
+#include "robot_common/utilities/ori_tool.h"
+#include "robot_common/utilities/lp_filter.h"
 #include "geometry_msgs/Twist.h"
 
 // Gazebo
@@ -34,7 +33,7 @@
 #include "vmc/ParallelVMC.h"
 #include "vmc/SerialVMC.h"
 
-#include "robot_common/utilities/lp_filter.h"
+
 
 namespace rl_controller
 {
@@ -105,8 +104,6 @@ private:
 
   double basePitch_;
   std::vector<LowPassFilter> actionLPFs_;
-  std::vector<InertiaFilter> actionIFs_;
-  std::vector<MeanFilter> actionMFs_;
   std::vector<double> actions_;
   std::vector<double> lastAction_;
 };

@@ -27,16 +27,6 @@ bool DiabloHW::init(ros::NodeHandle& root_nh, ros::NodeHandle& robot_hw_nh) {
   robot_hw_nh.param("use_filter", useFilter_, true);
   for (int i = 0; i < 6; ++i) {
     velLPFs_.emplace_back(lp_cutoff_frequency);
-    posLPFs_.emplace_back(lp_cutoff_frequency);
-    tauLPFs_.emplace_back(lp_cutoff_frequency);
-  }
-
-  double max_acc;
-  robot_hw_nh.param("max_acc", max_acc, 50.);
-  for (int i = 0; i < 6; ++i) {
-    velVFs_.emplace_back(max_acc);
-    posVFs_.emplace_back(max_acc);
-    tauVFs_.emplace_back(max_acc);
   }
 
   diabloSDK_->start_joint_sdk();
@@ -83,13 +73,11 @@ void DiabloHW::read(const ros::Time& time, const ros::Duration& period) {
   for (const auto& joint : Joints) {
     if (useFilter_)
     {
-      posLPFs_[i].input(joint.pos / POS_SCALE);
       velLPFs_[i].input(joint.vel / VEL_SCALE);
-      tauLPFs_[i].input( joint.torque / TAU_SCALE);
 
-      jointData_[i].pos_ = posLPFs_[i].output();
+      jointData_[i].pos_ = joint.pos / POS_SCALE;
       jointData_[i].vel_ = velLPFs_[i].output();
-      jointData_[i].tau_ = tauLPFs_[i].output();
+      jointData_[i].tau_ = joint.torque / TAU_SCALE;
     }
     else
     {
