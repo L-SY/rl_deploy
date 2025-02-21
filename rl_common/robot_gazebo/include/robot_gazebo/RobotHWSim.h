@@ -8,6 +8,7 @@
 #include <robot_common/interface/hardware_interface/robot_state_interface.h>
 #include <robot_common/interface/hardware_interface/HybridJointInterface.h>
 #include <hardware_interface/joint_command_interface.h>
+#include "robot_common/utilities/lp_filter.h"
 
 namespace Robot
 {
@@ -55,6 +56,8 @@ private:
   std::list<HybridJointData> hybridJointDatas_;
   std::unordered_map<std::string, std::deque<HybridJointCommand>> cmdBuffer_;
 
+  bool useFilter_ = true;
+  std::vector<LowPassFilter> velLPFs_;
   double delay_{};
 };
 

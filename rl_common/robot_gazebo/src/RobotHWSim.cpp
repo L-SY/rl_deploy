@@ -71,6 +71,15 @@ bool RobotHWSim::initSim(const std::string& robot_namespace, ros::NodeHandle mod
   {
     ROS_WARN("No joint initial positions specified");
   }
+
+  double lp_cutoff_frequency;
+  model_nh.param("lp_cutoff_frequency", lp_cutoff_frequency, 100.);
+  model_nh.param("use_filter", useFilter_, true);
+  for (unsigned int i = 0; i < n_dof_; ++i) {
+    velLPFs_.emplace_back(lp_cutoff_frequency);
+  }
+
+
   return ret;
 }
 
@@ -81,12 +90,23 @@ void RobotHWSim::readSim(ros::Time time, ros::Duration period)
   for (unsigned int j = 0; j < n_dof_; j++)
   {
     double position = sim_joints_[j]->Position(0);
+//    joint_velocity_[j] = sim_joints_[j]->GetVelocity(0);
 
-    joint_velocity_[j] = (position - joint_position_[j]) / period.toSec();
     if (time == ros::Time(period.toSec()))
     {
       joint_velocity_[j] = 0;
     }
+    else
+    {
+      if (useFilter_)
+      {
+        velLPFs_[j].input((position - joint_position_[j]) / period.toSec(), time);
+        joint_velocity_[j] = velLPFs_[j].output();
+      }
+      else
+        joint_velocity_[j] = (position - joint_position_[j]) / period.toSec();
+    }
+
     if (joint_types_[j] == urdf::Joint::PRISMATIC)
     {
       joint_position_[j] = position;
