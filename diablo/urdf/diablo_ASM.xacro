@@ -51,13 +51,13 @@
 
     <xacro:create_joint name="left_fake_hip_joint" type="revolute" parent="diablo_base_link" child="left_fake_thigh_link"
                         origin_xyz="0 0.18755 0" origin_rpy="1.5708 0.13433 -3.1416" axis_xyz="0 0 1" lower="-1.57" upper="1.57" effort="27" velocity="26"/>
-    <xacro:create_joint name="left_fake_knee_joint" type="revolute" parent="left_fake_thigh_link" child="left_fake_shank_link"
+    <xacro:create_joint name="left_hip_joint" type="revolute" parent="left_fake_thigh_link" child="left_fake_shank_link"
                         origin_xyz="0.14 0 0"
                         origin_rpy="0 0 -2.8729" axis_xyz="0 0 1" lower="-1.57" upper="1.57" effort="27" velocity="26"/>
 
     <xacro:create_joint name="right_fake_hip_joint" type="revolute" parent="diablo_base_link" child="right_fake_thigh_link"
                         origin_xyz="0 -0.18755 0" origin_rpy="1.5708 0.13433 3.1416" axis_xyz="0 0 1" lower="-1.57" upper="1.57" effort="27" velocity="26"/>
-    <xacro:create_joint name="right_fake_knee_joint" type="revolute" parent="right_fake_thigh_link" child="right_fake_shank_link"
+    <xacro:create_joint name="right_hip_joint" type="revolute" parent="right_fake_thigh_link" child="right_fake_shank_link"
                         origin_xyz="0.14 0 0"
                         origin_rpy="0 0 -2.8729" axis_xyz="0 0 1" lower="-1.57" upper="1.57" effort="27" velocity="26"/>
 
@@ -66,4 +66,23 @@
                         origin_xyz="0.14 0 0.025" origin_rpy="0 0 0.13433" axis_xyz="0 0 1" lower="-1e10" upper="1e10" effort="27" velocity="26"/>
     <xacro:create_joint name="right_wheel_joint" type="revolute" parent="right_fake_shank_link" child="right_wheel"
                         origin_xyz="0.14 0 -0.025" origin_rpy="0 0 0.13433" axis_xyz="0 0 1" lower="-1e10" upper="1e10" effort="27" velocity="26"/>
+
+    <xacro:include filename="$(find diablo)/urdf/imu/imu.urdf.xacro"/>
+    <xacro:IMU connected_to="diablo_base_link" imu_name="base_imu"
+               mesh_file="package://diablo/urdf/imu/imu.stl" xyz="0.00 0.00 0.00"
+               rpy="0.00 0.00 0.00"/>
+
+    <xacro:create_transmission joint_name="right_fake_hip_joint"/>
+    <xacro:create_transmission joint_name="right_hip_joint"/>
+    <xacro:create_transmission joint_name="left_fake_hip_joint"/>
+    <xacro:create_transmission joint_name="left_hip_joint"/>
+    <xacro:create_transmission joint_name="left_wheel_joint"/>
+    <xacro:create_transmission joint_name="right_wheel_joint"/>
+
+    <gazebo>
+        <plugin name="robot_ros_control" filename="librobot_hw_sim.so">
+            <robotNamespace>/</robotNamespace>
+            <robotSimType>robot_gazebo/RobotHWSim</robotSimType>
+        </plugin>
+    </gazebo>
 </robot>
